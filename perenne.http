@@ -1,0 +1,6 @@
+@perenne_HostAddress = http://localhost:5124
+
+GET {{perenne_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
