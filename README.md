@@ -1,4 +1,6 @@
-# Perenne – Backend ⚠️EM DESENVOLVIMENTO⚠️
+#⚠️EM DESENVOLVIMENTO⚠️
+
+# Perenne – Backend 
 
 Plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed interativo, eventos e notificações.
 
