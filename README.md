@@ -1,10 +1,12 @@
 
 <h1 align="center">⚠️ EM DESENVOLVIMENTO ⚠️</h1>
 
+<h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
-# Perenne – Backend 
 
-Plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
+# Perenne – Backend
+
+Perenne é uma plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
 
 ## 📖 Sobre
 
