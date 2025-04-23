@@ -4,7 +4,7 @@
 
 # Perenne – Backend 
 
-Plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed interativo, eventos e notificações.
+Plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
 
 ## 📖 Sobre
 
@@ -12,7 +12,6 @@ O **Perenne** é uma plataforma de comunidade construída em arquitetura modular
 
 - Interações em grupos e troca de mensagens em tempo real.
 - Feed de notícias personalizado para cada grupo.
-- Discussões e fóruns internos.
 - Gerenciamento de eventos e notificações.
 
 ## ✨ Funcionalidades
