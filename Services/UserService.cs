@@ -4,20 +4,17 @@ using perenne.Repositories;
 
 namespace perenne.Services;
 
-public class UserService
+public class UserService : IUserService
 {
-    private readonly UserRepository _userRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserService(UserRepository userRepository)
+    public UserService(IUserRepository userRepository)
     {
         _userRepository = userRepository;
     }
 
-    public async Task<bool> RegisterUserAsync(UserRegisterDto dto)
+    public async Task RegisterUserAsync(UserRegisterDto dto)
     {
-        if (await _userRepository.UserExistsAsync(dto.Email, dto.CPF))
-            return false;
-
         var user = new User
         {
             Email = dto.Email,
@@ -29,6 +26,15 @@ public class UserService
             CreatedAt = DateTime.UtcNow
         };
 
-        return await _userRepository.AddUserAsync(user);
+        try { await _userRepository.AddUserAsync(user); } 
+        catch { throw new Exception("User with this email or CPF already exists."); }
+    }
+
+    public async Task<User> LoginAsync(string email, string password)
+    {
+        var user = await _userRepository.GetUserByEmailAsync(email);
+        if (user == null || user.Password != password) 
+            throw new Exception("Invalid Email or Password");
+        return user;
     }
 }

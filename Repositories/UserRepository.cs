@@ -4,24 +4,14 @@ using perenne.Models;
 
 namespace perenne.Repositories;
 
-public class UserRepository
+public class UserRepository(ApplicationDbContext context) : IUserRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public UserRepository(ApplicationDbContext context)
+    public async Task AddUserAsync(User user)
     {
-        _context = context;
+        await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
     }
 
-    public async Task<bool> AddUserAsync(User user)
-    {
-        await _context.Users.AddAsync(user);
-        var saved = await _context.SaveChangesAsync();
-        return saved > 0;
-    }
-
-    public async Task<bool> UserExistsAsync(string email, string cpf)
-    {
-        return await _context.Users.AnyAsync(u => u.Email == email || u.CPF == cpf);
-    }
+    public async Task<User?> GetUserByEmailAsync(string email) =>
+        await context.Users.FindAsync((User u) => u.Email == email);
 }
