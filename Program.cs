@@ -64,6 +64,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 
+//Categorias
+builder.services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.services.AddScoped<ICategoryService, CategoryService>();
+
+
 var app = builder.Build();
 
 app.UseSession();

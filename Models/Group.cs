@@ -10,4 +10,6 @@ public class Group : Entity
 
     public required ChatChannel ChatChannelId { get; set; }
     public required FeedChannel FeedChannelId { get; set; }
+    public Guid CategoryId { get; set; }
+    public required Category Category { get; set; }
 }

@@ -43,6 +43,10 @@ namespace perenne.Data
                     .WithOne(f => f.Group)
                     .HasForeignKey<FeedChannel>(f => f.GroupId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(g => g.Category)
+                    .WithMany(c => c.Groups)
+                    .HasForeignKey(g => g.CategoryId);
             });
 
             // Configure unique constraints for channels
@@ -53,11 +57,12 @@ namespace perenne.Data
             modelBuilder.Entity<FeedChannel>()
                 .HasIndex(f => f.GroupId)
                 .IsUnique();
-        }
+        }        }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<ChatChannel> ChatChannels { get; set; }
         public DbSet<FeedChannel> FeedChannels { get; set; }
+        public DbSet<Category> Categories { get; set; }
     }
 }
