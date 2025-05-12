@@ -16,7 +16,8 @@ public class UserController(IUserService userService) : ControllerBase
 
     [HttpPost(nameof(Login))]
     public async Task<User> Login(
-        [FromBody] string email, 
-        [FromBody] string password) =>
-        await userService.LoginAsync(email, password);
+        //[FromBody] string email, 
+        //[FromBody] string password) =>
+        [FromBody] UserRegisterDto dto) =>
+        await userService.LoginAsync(dto.Email, dto.Password);
 }
