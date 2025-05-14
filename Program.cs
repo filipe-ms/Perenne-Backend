@@ -12,10 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();    // Para permitir injetar HttpContext
-builder.Services.AddDistributedMemoryCache(); // Cache para armazenar sessıes
+builder.Services.AddDistributedMemoryCache(); // Cache para armazenar sess√µes
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiraÁ„o da sess„o
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expira√ß√£o da sess√£o
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -25,9 +25,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .SetIsOriginAllowed(_ => true) // Permite qualquer origem
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials(); // Importante para cookies e autentica√ß√£o
     });
 });
 
@@ -66,9 +68,12 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 
 var app = builder.Build();
 
+// A ordem √© importante: CORS deve vir antes do UseHttpsRedirection e UseAuthentication
 app.UseSession();
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+
+// Comentando UseHttpsRedirection para evitar redirecionamentos que possam causar problemas com CORS
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
