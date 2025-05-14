@@ -9,7 +9,7 @@ namespace perenne.Controllers
 {
     public class IdentityController : ControllerBase
     {
-        private const string TokenSecret = "";
+        private const string TokenSecret = "andersongabrielvalencamarquesdesa";
         private static readonly TimeSpan TokenExpiration = TimeSpan.FromHours(2);
 
         [HttpPost("token")]
