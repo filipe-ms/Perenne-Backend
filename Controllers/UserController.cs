@@ -15,41 +15,13 @@ public class UserController(IUserService userService) : ControllerBase
         await userService.RegisterUserAsync(dto);
 
     [HttpPost(nameof(Login))]
-    public async Task<IActionResult> Login(
-
-
+    public async Task<User> Login(
         [FromBody] UserLoginDto dto)
-
-
     {
-
-
-        try
-
-
-        {
-
-
+      
             var token = await userService.LoginAsync(dto.Email, dto.Password);
-
-
-            return Ok(token);
-
-
-        }
-
-
-        catch (Exception ex)
-
-
-        {
-
-
-            return BadRequest(ex.Message);
-
-
-        }
-
-
+            return token;
+        
+        
     }
 }

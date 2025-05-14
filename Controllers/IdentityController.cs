@@ -23,8 +23,11 @@ namespace perenne.Controllers
             _configuration = configuration;
             _context = context;
         }
+        private const string TokenSecret = "andersongabrielvalencamarquesdesa";
+        private static readonly TimeSpan TokenExpiration = TimeSpan.FromHours(2);
 
-        [HttpGet("ping")]
+        [HttpPost("token")]
+
         public ActionResult<object> Ping()
         {
             try
