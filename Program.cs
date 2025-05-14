@@ -12,10 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();    // Para permitir injetar HttpContext
-builder.Services.AddDistributedMemoryCache(); // Cache para armazenar sess�es
+builder.Services.AddDistributedMemoryCache(); // Cache para armazenar sessões
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expira��o da sess�o
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiração da sessão
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
