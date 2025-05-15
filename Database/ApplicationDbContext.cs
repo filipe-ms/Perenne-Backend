@@ -58,6 +58,9 @@ namespace perenne.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<ChatChannel> ChatChannels { get; set; }
-        public DbSet<FeedChannel> FeedChannels { get; set; }
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Feed> Feeds { get; set; }
+
+
     }
 }

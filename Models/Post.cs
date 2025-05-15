@@ -1,14 +1,13 @@
 ﻿namespace perenne.Models
 {
-    public class Post
+    public class Post : Entity
     {
-        public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
+        public Guid FeedId { get; set; }
+        public virtual Feed Feed { get; set; } = null!;
+        public Guid UserId { get; set; }
+        public virtual User User { get; set; } = null!;
     }
 }
