@@ -2,17 +2,11 @@
 
 namespace perenne.Services
 {
-    public class FeedService : IFeedService
+    public class FeedService(IFeedRepository feedRepository) : IFeedService
     {
-        private readonly IFeedRepository _feedRepository;
-
-        public FeedService(IFeedRepository chatRepository)
-        {
-            _feedRepository = chatRepository;
-        }
         public async Task<Feed> CreateFeedAsync(Feed feed)
         {
-            var f = await _feedRepository.CreateFeedAsync(feed);
+            var f = await feedRepository.CreateFeedAsync(feed);
             return f;
         }
     }

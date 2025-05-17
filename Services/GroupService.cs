@@ -1,7 +1,5 @@
 ﻿using perenne.DTOs;
 using perenne.Interfaces;
-using perenne.Models;
-using perenne.Repositories;
 
 namespace perenne.Services
 {
@@ -35,7 +33,7 @@ namespace perenne.Services
             };
 
             if (group == null) throw new ArgumentNullException(nameof(group));
-            
+
             Group newgroup = await _repository.AddAsync(group);
 
             ChatChannel chat = new()
@@ -62,7 +60,7 @@ namespace perenne.Services
 
             return newgroup;
         }
-        
+
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
             var group = await _repository.GetGroupByIdAsync(id);
