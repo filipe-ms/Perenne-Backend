@@ -7,5 +7,6 @@ namespace perenne.Services
     {
         Task RegisterUserAsync(UserRegisterDto dto);
         Task<User> LoginAsync(string email, string password);
+        Task<User> GetUserByIdAsync(Guid id);
     }
 }

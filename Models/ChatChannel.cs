@@ -1,17 +1,15 @@
 ﻿using perenne.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-
-public class ChatChannel
+public class ChatChannel : Entity
 {
-    [Required, Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
-    public Guid GroupId { get; set; } // Non-nullable foreign key
-    public Guid FirstUserId { get; set; }
-    public Guid SecondUserId { get; set; }
-
-    public required virtual User FirstUser { get; set; }
-    public required virtual User SecondUser { get; set; }
+    [Required]
     public List<ChatMessage> Messages { get; set; } = new();
-    public required virtual Group Group { get; set; } // Non-nullable navigation
+
+    // Foreign Key
+    public Guid GroupId { get; set; }
+
+    // Navigation Property
+    [Required]
+    public Group? Group { get; set; }
 }

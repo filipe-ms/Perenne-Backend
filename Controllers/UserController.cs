@@ -17,11 +17,8 @@ public class UserController(IUserService userService) : ControllerBase
     [HttpPost(nameof(Login))]
     public async Task<User> Login(
         [FromBody] UserLoginDto dto)
-    {
-      
+        {
             var token = await userService.LoginAsync(dto.Email, dto.Password);
             return token;
-        
-        
-    }
+        }
 }

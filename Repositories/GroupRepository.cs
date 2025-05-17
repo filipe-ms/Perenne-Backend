@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using perenne.Data;
-using perenne.Models;
-using static GroupMember;
+using perenne.Interfaces;
+using System.Text.RegularExpressions;
+
 
 namespace perenne.Repositories
 {
@@ -14,9 +15,17 @@ namespace perenne.Repositories
             _context = context;
         }
 
-        public async Task<Group?> GetByIdAsync(Guid id)
+        public async Task<Group> UpdateGroupAsync(Group group)
+        {
+            var g = _context.Groups.Update(group);
+            await _context.SaveChangesAsync();
+            return g.Entity;
+        }
+
+        public async Task<Group?> GetGroupByIdAsync(Guid id)
         {
             return await _context.Groups
+                .AsNoTracking()
                 .Include(g => g.Members)
                 .Include(g => g.Feed)
                 .Include(g => g.ChatChannel)
@@ -32,37 +41,20 @@ namespace perenne.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddAsync(Group group)
+        public async Task<Group> AddAsync(Group group)
         {
-            await _context.Groups.AddAsync(group);
+            var entry = await _context.Groups.AddAsync(group);
+            Group g = entry.Entity;
             await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Group group)
-        {
-            _context.Groups.Update(group);
-            await _context.SaveChangesAsync();
+            return g;
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            var group = await GetByIdAsync(id);
+            var group = await GetGroupByIdAsync(id);
             if (group != null)
             {
                 _context.Groups.Remove(group);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task AddMemberAsync(Guid groupId, GroupMember member)
-        {
-            var group = await _context.Groups
-                .Include(g => g.Members)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
-
-            if (group != null)
-            {
-                group.Members.Add(member);
                 await _context.SaveChangesAsync();
             }
         }
@@ -101,6 +93,26 @@ namespace perenne.Repositories
             }
         }
 
+        // Group Member Operations
+
+        public async Task<Group> AddGroupMemberAsync(GroupMember member)
+        {
+            var group = await _context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == member.GroupId);
+
+            // Grupo não encontrado
+            if (group == null)
+                throw new InvalidOperationException($"Group with ID {member.GroupId} not found.");
+
+            group.Members.Add(member);
+            await _context.SaveChangesAsync();
+
+            return group;
+        }
+
+
+        /*
         public async Task<Feed?> GetFeedAsync(Guid groupId)
         {
             return await _context.Feeds
@@ -112,5 +124,6 @@ namespace perenne.Repositories
             return await _context.ChatChannels
                 .FirstOrDefaultAsync(c => c.GroupId == groupId);
         }
+        */
     }
 }

@@ -1,20 +1,17 @@
 ﻿using perenne.Models;
 using static GroupMember;
 
-namespace perenne.Repositories
+namespace perenne.Interfaces
 {
     public interface IGroupRepository
     {
-        Task<Group?> GetByIdAsync(Guid id);
+        Task<Group?> GetGroupByIdAsync(Guid id);
         Task<IEnumerable<Group>> GetAllAsync();
-        Task AddAsync(Group group);
-        Task UpdateAsync(Group group);
+        Task<Group> AddAsync(Group group);
+        Task<Group> UpdateGroupAsync(Group group);
         Task DeleteAsync(Guid id);
-
-        Task AddMemberAsync(Guid groupId, GroupMember member);
+        Task<Group> AddGroupMemberAsync(GroupMember member);
         Task RemoveMemberAsync(Guid groupId, Guid userId);
         Task ChangeMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole);
-        Task<Feed?> GetFeedAsync(Guid groupId);
-        Task<ChatChannel?> GetChatChannelAsync(Guid groupId);
     }
 }

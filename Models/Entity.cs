@@ -1,16 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using perenne.Models;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
-namespace perenne.Models
+public abstract class Entity
 {
-    public abstract class Entity
-    {
+    [Required, Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
 
-        [Required, Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Id { get; set; }
-        public required DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public Guid? CreatedBy { get; set; }
-        public Guid? UpdatedBy { get; set; }
-    }
+    public required DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    // Foreign key IDs
+    public Guid? CreatedById { get; set; }
+    public Guid? UpdatedById { get; set; }
+
+    // Navigation properties
+    public User? CreatedBy { get; set; }
+    public User? UpdatedBy { get; set; }
 }

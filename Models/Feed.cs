@@ -1,10 +1,15 @@
 using perenne.Models;
+using System.ComponentModel.DataAnnotations;
 
 public class Feed : Entity
 {
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    
+    public List<Post> Posts { get; set; } = new List<Post>();
+
+    // Foreign Key
     public Guid GroupId { get; set; }
-    public required virtual Group Group { get; set; }
-    public virtual List<Post> Posts { get; set; } = new List<Post>();
+
+    // Navigation Property
+    [Required]
+    public Group? Group { get; set; }
 }

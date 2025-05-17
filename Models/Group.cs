@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using perenne.Models;
 
 public class Group : Entity
@@ -9,9 +8,7 @@ public class Group : Entity
 
     [MinLength(2), MaxLength(500)]
     public string? Description { get; set; }
-
-    public required ChatChannel ChatChannel { get; set; }
-
-    public required Feed Feed { get; set; }
-    public virtual List<GroupMember> Members { get; set; } = new List<GroupMember>();
+    public List<GroupMember> Members { get; set; } = new();
+    public ChatChannel? ChatChannel { get; set; }
+    public Feed? Feed { get; set; }
 }

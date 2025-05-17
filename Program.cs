@@ -2,11 +2,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using perenne.Data;
+using perenne.Interfaces;
 using perenne.Repositories;
 using perenne.Services;
+using perenne.Websockets;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuração das opções JWT
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -37,25 +43,26 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// JWT
-builder.Services.AddAuthentication(x =>
+// JWT Authentication
+builder.Services.AddAuthentication(options =>
 {
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(x =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
 {
-    x.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!)),
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
     };
 });
+
 builder.Services.AddAuthorization();
 
 // User
@@ -66,18 +73,28 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 
+// Chat
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+// Feed
+builder.Services.AddScoped<IFeedRepository, FeedRepository>();
+builder.Services.AddScoped<IFeedService, FeedService>();
+
+// SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
-// A ordem é importante: CORS deve vir antes do UseHttpsRedirection e UseAuthentication
+// Middleware pipeline
 app.UseSession();
 app.UseCors("AllowAll");
-
-// Comentando UseHttpsRedirection para evitar redirecionamentos que possam causar problemas com CORS
-// app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Comentado para evitar problemas com CORS
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<ChatHub>(ChatHub.ChatHubPath);
 app.MapControllers();
 
 app.Run();

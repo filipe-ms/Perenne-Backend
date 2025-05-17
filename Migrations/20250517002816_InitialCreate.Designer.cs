@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using perenne.Data;
@@ -11,9 +12,11 @@ using perenne.Data;
 namespace perenne.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250517002816_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,6 +141,10 @@ namespace perenne.Migrations
                     b.Property<Guid?>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
 
@@ -155,6 +162,10 @@ namespace perenne.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("UserId", "GroupId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("UpdatedById");
 
                     b.HasIndex("GroupId", "UserId")
                         .IsUnique();
@@ -405,11 +416,19 @@ namespace perenne.Migrations
 
             modelBuilder.Entity("GroupMember", b =>
                 {
+                    b.HasOne("perenne.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
                     b.HasOne("Group", "Group")
                         .WithMany("Members")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("perenne.Models.User", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
 
                     b.HasOne("perenne.Models.User", "User")
                         .WithMany()
@@ -417,7 +436,11 @@ namespace perenne.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("CreatedBy");
+
                     b.Navigation("Group");
+
+                    b.Navigation("UpdatedBy");
 
                     b.Navigation("User");
                 });

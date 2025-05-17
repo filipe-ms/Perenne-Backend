@@ -1,13 +1,15 @@
-﻿using perenne.Models;
+﻿using perenne.DTOs;
 
-namespace perenne.Services
+namespace perenne.Interfaces
 {
     public interface IGroupService
     {
-        Task<Group> GetByIdAsync(Guid id);
+        Task<Group> CreateGroupAsync(GroupCreateDto dto);
+        Task<Group> GetGroupByIdAsync(Guid id);
         Task<IEnumerable<Group>> GetAllAsync();
-        Task CreateAsync(Group group);
-        Task UpdateAsync(Guid id, Group group);
         Task DeleteAsync(Guid id);
+
+        // Group member ops
+        Task<Group> AddGroupMemberAsync(AddGroupMemberDto dto);
     }
 }

@@ -26,8 +26,7 @@ public class UserService : IUserService
             CreatedAt = DateTime.UtcNow
         };
 
-        try { await _userRepository.AddUserAsync(user); } 
-        catch { throw new Exception("User with this email or CPF already exists."); }
+        await _userRepository.AddUserAsync(user);
     }
 
     public async Task<User> LoginAsync(string email, string password)
@@ -35,6 +34,14 @@ public class UserService : IUserService
         var user = await _userRepository.GetUserByEmailAsync(email);
         if (user == null || user.Password != password) 
             throw new Exception("Invalid Email or Password");
+        return user;
+    }
+
+    public async Task<User> GetUserByIdAsync(Guid id)
+    {
+        var user = await _userRepository.GetUserByIdAsync(id);
+        if (user == null) 
+            throw new Exception("User not found");
         return user;
     }
 }

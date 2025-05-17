@@ -16,8 +16,6 @@ namespace perenne.Models
         [Required, MinLength(6), MaxLength(100)]
         public required string Password { get; set; }
 
-        public string PasswordHash { get; set; }
-
         public bool IsValidated { get; set; } = true; //lembrar de rodar pra false
 
         public bool IsBanned { get; set; } = false;

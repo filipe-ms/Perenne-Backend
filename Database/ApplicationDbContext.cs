@@ -8,10 +8,21 @@ namespace perenne.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<GroupMember> GroupMembers { get; set; }
+        public DbSet<ChatChannel> ChatChannels { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<Feed> Feed { get; set; }
+        public DbSet<Post> Posts { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // User configuration
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.CPF)
                 .IsUnique();
@@ -20,47 +31,87 @@ namespace perenne.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            modelBuilder.Entity<User>()
-                .HasOne<User>()
+            // Group configuration
+            modelBuilder.Entity<Group>()
+                .HasOne(g => g.ChatChannel)
+                .WithOne(cc => cc.Group)
+                .HasForeignKey<ChatChannel>(cc => cc.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Group>()
+                .HasOne(g => g.Feed)
+                .WithOne(f => f.Group)
+                .HasForeignKey<Feed>(f => f.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // GroupMember configuration
+            modelBuilder.Entity<GroupMember>()
+                .HasKey(gm => new { gm.UserId, gm.GroupId });
+
+            // Relationship: GroupMember → User (Many-to-One)
+            modelBuilder.Entity<GroupMember>()
+                .HasOne(gm => gm.User)
                 .WithMany()
+                .HasForeignKey(gm => gm.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Relationship: GroupMember → Group (Many-to-One)
+            modelBuilder.Entity<GroupMember>()
+                .HasOne(gm => gm.Group)
+                .WithMany(g => g.Members)
+                .HasForeignKey(gm => gm.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Enum conversion
+            modelBuilder.Entity<GroupMember>()
+                .Property(gm => gm.Role)
+                .HasConversion<string>();
+
+            // ChatChannel configuration
+            modelBuilder.Entity<ChatChannel>()
+                .HasMany(cc => cc.Messages)
+                .WithOne(cm => cm.ChatChannel)
+                .HasForeignKey(cm => cm.ChatChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Feed configuration
+            modelBuilder.Entity<Feed>()
+                .HasMany(f => f.Posts)
+                .WithOne(p => p.Feed)
+                .HasForeignKey("FeedId")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Post configuration
+            modelBuilder.Entity<Post>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey("UserId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure enum conversions
+            modelBuilder.Entity<GroupMember>()
+                .Property(gm => gm.Role)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Role)
+                .HasConversion<string>();
+
+            // Entity base class audit tracking configuration
+            modelBuilder.Entity<User>()
+                .HasMany<User>()
+                .WithOne(e => e.CreatedBy)
                 .HasForeignKey("CreatedById")
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
-                .HasOne<User>()
-                .WithMany()
+                .HasMany<User>()
+                .WithOne(e => e.UpdatedBy)
                 .HasForeignKey("UpdatedById")
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Group>(entity =>
-            {
-                entity.HasOne(g => g.ChatChannelId)
-                    .WithOne(c => c.Group)
-                    .HasForeignKey<ChatChannel>(c => c.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(g => g.FeedChannelId)
-                    .WithOne(f => f.Group)
-                    .HasForeignKey<FeedChannel>(f => f.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Configure unique constraints for channels
-            modelBuilder.Entity<ChatChannel>()
-                .HasIndex(c => c.GroupId)
-                .IsUnique();
-
-            modelBuilder.Entity<FeedChannel>()
-                .HasIndex(f => f.GroupId)
-                .IsUnique();
         }
-
-        public DbSet<User> Users { get; set; }
-        public DbSet<Group> Groups { get; set; }
-        public DbSet<ChatChannel> ChatChannels { get; set; }
-        public DbSet<Post> Posts { get; set; }
-        public DbSet<Feed> Feeds { get; set; }
-
-
     }
 }
+
+// dotnet ef migrations add InitialCreate
+// dotnet ef database update
