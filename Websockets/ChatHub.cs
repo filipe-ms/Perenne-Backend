@@ -65,7 +65,7 @@ namespace perenne.Websockets
                     throw new HubException("[ChatHub] Você não é membro deste canal.");
                 }
 
-                // "GROUPS É DO SIGNALR, NÃO TEM NADA A VER COM NOSSOS GRUPOS
+                // "GROUPS" É DO SIGNALR, NÃO TEM NADA A VER COM NOSSOS GRUPOS
                 await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
 
             }

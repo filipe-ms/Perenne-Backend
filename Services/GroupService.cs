@@ -60,7 +60,6 @@ namespace perenne.Services
 
             return newgroup;
         }
-
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
             var group = await _repository.GetGroupByIdAsync(id);

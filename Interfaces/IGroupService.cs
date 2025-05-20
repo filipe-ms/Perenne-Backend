@@ -1,4 +1,5 @@
 ﻿using perenne.DTOs;
+using perenne.Models;
 
 namespace perenne.Interfaces
 {

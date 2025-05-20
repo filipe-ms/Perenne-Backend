@@ -1,6 +1,7 @@
 ﻿using perenne.DTOs;
 using perenne.Models;
 using perenne.Repositories;
+using perenne.Interfaces;
 
 namespace perenne.Services;
 
@@ -43,5 +44,10 @@ public class UserService : IUserService
         if (user == null) 
             throw new Exception("User not found");
         return user;
+    }
+
+    public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
+    {
+        return await _userRepository.GetGroupsByUserIdAsync(userId);
     }
 }

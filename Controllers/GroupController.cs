@@ -8,8 +8,8 @@ namespace perenne.Controllers
     [Route("api/[controller]")]
     public class GroupController(IGroupService groupService) : ControllerBase
     {
-        [HttpPost(nameof(Create))]
-        public async Task Create(
+        [HttpPost(nameof(CreateGroup))]
+        public async Task CreateGroup(
             [FromBody] GroupCreateDto dto) =>
             await groupService.CreateGroupAsync(dto);
 
@@ -35,6 +35,7 @@ namespace perenne.Controllers
                 return NotFound();
             return Ok(group);
         }
+
 
         /*
         [HttpPut("{id}")]

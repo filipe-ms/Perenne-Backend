@@ -46,5 +46,8 @@ namespace perenne.Models
         [MaxLength(3000)]
         public string? Bio { get; set; }
 
+        // Navigation property
+        public virtual List<GroupMember> Groups { get; set; } = new();
+
     }
 }

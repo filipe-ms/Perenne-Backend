@@ -51,7 +51,7 @@ namespace perenne.Data
             // Relationship: GroupMember → User (Many-to-One)
             modelBuilder.Entity<GroupMember>()
                 .HasOne(gm => gm.User)
-                .WithMany()
+                .WithMany(u => u.Groups)
                 .HasForeignKey(gm => gm.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
