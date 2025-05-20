@@ -1,7 +1,7 @@
 ﻿using perenne.DTOs;
 using perenne.Models;
 
-namespace perenne.Services
+namespace perenne.Interfaces
 {
     public interface IUserService
     {
