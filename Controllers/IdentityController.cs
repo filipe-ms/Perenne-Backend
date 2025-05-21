@@ -22,7 +22,6 @@ namespace perenne.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, request.UserId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, request.Email),
-                new Claim(JwtRegisteredClaimNames.Sub, request.UserId.ToString())
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

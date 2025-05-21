@@ -6,5 +6,6 @@ namespace perenne.Interfaces
     {
         Task<ChatChannel> AddChatChannelAsync(ChatChannel chat);
         Task<ChatMessage> AddChatMessageAsync(ChatMessage message);
+        Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatid, int num);
     }
 }

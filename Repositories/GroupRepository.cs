@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using perenne.Data;
+using perenne.FTOs;
 using perenne.Interfaces;
 using System.Text.RegularExpressions;
 
@@ -32,13 +33,18 @@ namespace perenne.Repositories
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
 
-        public async Task<IEnumerable<Group>> GetAllAsync()
+        public async Task<IEnumerable<GroupListFto>> GetAllAsync()
         {
-            return await _context.Groups
-                .Include(g => g.Members)
-                .Include(g => g.Feed)
-                .Include(g => g.ChatChannel)
-                .ToListAsync();
+            var groups = await _context.Groups.ToListAsync();
+
+            var result = groups.Select(g => new GroupListFto
+            {
+                Id = g.Id,
+                Name = g.Name,
+                Description = g.Description
+            });
+
+            return result;
         }
 
         public async Task<Group> AddAsync(Group group)
@@ -95,20 +101,44 @@ namespace perenne.Repositories
 
         // Group Member Operations
 
-        public async Task<Group> AddGroupMemberAsync(GroupMember member)
+        public async Task<GroupMember> AddGroupMemberAsync(GroupMember member)
         {
-            var group = await _context.Groups
-                .Include(g => g.Members)
-                .FirstOrDefaultAsync(g => g.Id == member.GroupId);
+            if (member == null) throw new ArgumentNullException(nameof(member));
 
-            // Grupo não encontrado
-            if (group == null)
+            // Check if group exists
+            var groupExists = await _context.Groups.AnyAsync(g => g.Id == member.GroupId);
+            if (!groupExists)
+            {
                 throw new InvalidOperationException($"Group with ID {member.GroupId} not found.");
+            }
 
-            group.Members.Add(member);
+            // Check if user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == member.UserId);
+            if (!userExists)
+            {
+                throw new InvalidOperationException($"User with ID {member.UserId} not found.");
+            }
+
+            // Check if member already exists
+            var existingMember = await _context.GroupMembers
+                .FirstOrDefaultAsync(gm => gm.GroupId == member.GroupId && gm.UserId == member.UserId);
+            if (existingMember != null)
+            {
+                throw new InvalidOperationException($"User {member.UserId} is already a member of group {member.GroupId}.");
+            }
+
+            if (member.User != null) _context.Entry(member.User).State = EntityState.Unchanged;
+            if (member.Group != null) _context.Entry(member.Group).State = EntityState.Unchanged;
+
+
+            await _context.GroupMembers.AddAsync(member);
             await _context.SaveChangesAsync();
 
-            return group;
+            await _context.Entry(member).Reference(m => m.User).LoadAsync();
+            await _context.Entry(member).Reference(m => m.Group).LoadAsync();
+
+
+            return member; // Return the newly created GroupMember entity
         }
 
 

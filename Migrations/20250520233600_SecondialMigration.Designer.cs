@@ -12,8 +12,8 @@ using perenne.Data;
 namespace perenne.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250517004027_vodel")]
-    partial class vodel
+    [Migration("20250520233600_SecondialMigration")]
+    partial class SecondialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -121,6 +121,9 @@ namespace perenne.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.HasIndex("UpdatedById");
 
@@ -415,7 +418,7 @@ namespace perenne.Migrations
                         .IsRequired();
 
                     b.HasOne("perenne.Models.User", "User")
-                        .WithMany()
+                        .WithMany("Groups")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -513,6 +516,11 @@ namespace perenne.Migrations
                     b.Navigation("Feed");
 
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("perenne.Models.User", b =>
+                {
+                    b.Navigation("Groups");
                 });
 #pragma warning restore 612, 618
         }

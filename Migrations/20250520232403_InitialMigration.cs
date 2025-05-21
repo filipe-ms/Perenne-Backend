@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace perenne.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -151,7 +151,6 @@ namespace perenne.Migrations
                     Role = table.Column<string>(type: "text", nullable: false),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     IsMutedInGroupChat = table.Column<bool>(type: "boolean", nullable: false),
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
@@ -166,16 +165,6 @@ namespace perenne.Migrations
                         principalTable: "Groups",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GroupMembers_Users_CreatedById",
-                        column: x => x.CreatedById,
-                        principalTable: "Users",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_GroupMembers_Users_UpdatedById",
-                        column: x => x.UpdatedById,
-                        principalTable: "Users",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_GroupMembers_Users_UserId",
                         column: x => x.UserId,
@@ -310,25 +299,21 @@ namespace perenne.Migrations
                 column: "UpdatedById");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GroupMembers_CreatedById",
-                table: "GroupMembers",
-                column: "CreatedById");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_GroupMembers_GroupId_UserId",
                 table: "GroupMembers",
                 columns: new[] { "GroupId", "UserId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_GroupMembers_UpdatedById",
-                table: "GroupMembers",
-                column: "UpdatedById");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Groups_CreatedById",
                 table: "Groups",
                 column: "CreatedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_Name",
+                table: "Groups",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Groups_UpdatedById",

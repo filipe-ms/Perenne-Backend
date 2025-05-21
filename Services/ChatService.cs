@@ -31,5 +31,15 @@ namespace perenne.Services
             var m = await _chatRepository.AddChatMessageAsync(message);
             return m;
         }
+
+        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatid, int num)
+        {
+            if (num <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(num), "Número de mensagens deve ser maior que 0.");
+            }
+            var messages = await _chatRepository.GetLastXMessagesAsync(chatid, num);
+            return messages;
+        }
     }
 }

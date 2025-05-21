@@ -33,6 +33,10 @@ namespace perenne.Data
 
             // Group configuration
             modelBuilder.Entity<Group>()
+                .HasIndex(g => g.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<Group>()
                 .HasOne(g => g.ChatChannel)
                 .WithOne(cc => cc.Group)
                 .HasForeignKey<ChatChannel>(cc => cc.GroupId)

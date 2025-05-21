@@ -11,6 +11,12 @@ namespace perenne.Models
         public required string Content { get; set; } = string.Empty;
 
         public string? ImageUrl { get; set; }
+
+        // Foreign keys
+
+        public Guid FeedId;
+
+        // Navigation properties
         public Feed Feed { get; set; } = null!;
         public User User { get; set; } = null!;
     }

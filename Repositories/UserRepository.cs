@@ -35,5 +35,4 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
 
         return user.Groups.Select(gm => gm.Group).ToList();
     }
-
 }

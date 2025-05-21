@@ -32,5 +32,19 @@ namespace perenne.Repositories
             return m.Entity;
         }
 
+        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatid, int num)
+        {
+            if (num <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(num), "Número de mensagens deve ser maior que 0.");
+            }
+            var messages = await _context.ChatMessages
+                .Where(m => m.ChatChannelId == chatid)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(num)
+                .ToListAsync();
+            return messages;
+        }
+
     }
 }

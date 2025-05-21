@@ -1,5 +1,8 @@
 ﻿using perenne.DTOs;
+using perenne.FTOs;
 using perenne.Interfaces;
+using perenne.Models;
+using perenne.Repositories;
 
 namespace perenne.Services
 {
@@ -67,36 +70,49 @@ namespace perenne.Services
                 throw new KeyNotFoundException($"Group with ID {id} not found");
             return group;
         }
-        public async Task<Group> AddGroupMemberAsync(AddGroupMemberDto dto)
+
+        public async Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userId)
         {
-            var group = await _repository.GetGroupByIdAsync(dto.GroupId);
-            var user = await _userService.GetUserByIdAsync(dto.UserId);
-
-
-            if (group == null)
-                throw new KeyNotFoundException($"Group with ID {dto.GroupId} not found");
+            var user = await _userService.GetUserByIdAsync(userId);
             if (user == null)
-                throw new KeyNotFoundException($"User with ID {dto.UserId} not found");
+            {
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
+            }
 
-            GroupMember member = new()
+            var group = await _repository.GetGroupByIdAsync(groupId);
+            if (group == null)
+            {
+                throw new KeyNotFoundException($"Group with ID {groupId} not found.");
+            }
+
+            GroupMember newMember = new()
             {
                 Role = GroupRole.Member,
                 IsBlocked = false,
                 IsMutedInGroupChat = false,
-
-                UserId = dto.UserId,
-                GroupId = dto.GroupId,
-
-                User = user,
-                Group = group,
-
-                CreatedAt = DateTime.UtcNow
+                UserId = userId,
+                GroupId = groupId,
+                CreatedAt = DateTime.UtcNow,
+                User = await _userService.GetUserByIdAsync(userId),
+                Group = await GetGroupByIdAsync(groupId),
             };
 
-            return await _repository.AddGroupMemberAsync(member);
+            var createdMember = await _repository.AddGroupMemberAsync(newMember);
+
+            return new GroupMembershipFto
+            {
+                GroupId = createdMember.GroupId,
+                GroupName = createdMember.Group.Name,
+                UserId = createdMember.UserId,
+                UserFirstName = createdMember.User.FirstName,
+                UserLastName = createdMember.User.LastName,
+                RoleInGroup = createdMember.Role,
+                JoinedAt = createdMember.CreatedAt,
+                Message = $"User {user.FirstName} successfully joined group {group.Name}."
+            };
         }
 
-        public async Task<IEnumerable<Group>> GetAllAsync()
+        public async Task<IEnumerable<GroupListFto>> GetAllAsync()
         {
             return await _repository.GetAllAsync();
         }

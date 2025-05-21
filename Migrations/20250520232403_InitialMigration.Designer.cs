@@ -12,8 +12,8 @@ using perenne.Data;
 namespace perenne.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250520201515_UpdateUserGroupMemberRelationship")]
-    partial class UpdateUserGroupMemberRelationship
+    [Migration("20250520232403_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -121,6 +121,9 @@ namespace perenne.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.HasIndex("UpdatedById");
 

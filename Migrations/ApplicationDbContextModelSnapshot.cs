@@ -119,6 +119,9 @@ namespace perenne.Migrations
 
                     b.HasIndex("CreatedById");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.HasIndex("UpdatedById");
 
                     b.ToTable("Groups");

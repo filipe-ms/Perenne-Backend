@@ -5,7 +5,7 @@
 namespace perenne.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateUserGroupMemberRelationship : Migration
+    public partial class SecondialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
