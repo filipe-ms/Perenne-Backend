@@ -1,6 +1,5 @@
 ﻿using perenne.Interfaces;
 using perenne.Models;
-using perenne.Repositories;
 
 namespace perenne.Services
 {
@@ -12,6 +11,10 @@ namespace perenne.Services
             var f = await _feedRepository.CreateFeedAsync(feed);
             return f;
         }
+
+        public async Task<Post> CreatePostAsync(Post post) =>
+            await _feedRepository.CreatePostAsync(post);
+        
 
         public async Task<IEnumerable<Post>> GetLastXPostsAsync(Guid feedId, int num)
         {

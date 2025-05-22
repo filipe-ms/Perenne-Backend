@@ -31,14 +31,10 @@ public class UserController(IUserService _userService) : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
         if (string.IsNullOrEmpty(userIdString))
-        {
             return Unauthorized(new { message = $"[{nameof(GetGroups)}] Claim de User ID não encontrado na token." });
-        }
 
         if (!Guid.TryParse(userIdString, out var userIdGuid))
-        {
             return BadRequest(new { message = $"[{nameof(GetGroups)}] ID inválido registrado na token." });
-        }
 
         try
         {
@@ -71,9 +67,12 @@ public class UserController(IUserService _userService) : ControllerBase
         }
     }
 
-    [HttpGet("ping")] // Teste de autorização
+    [HttpGet("ping")]
     public ActionResult<string> TESTEPINGFRONT()
     {
         return "pong";
     }
+
+
+    // PEIXOTO
 }

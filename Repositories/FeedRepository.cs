@@ -14,12 +14,17 @@ namespace perenne.Repositories
             return f.Entity;
         }
 
-        public async Task<Post?> GetPostByIdAsync(Guid id)
+        public async Task<Post> GetPostByIdAsync(Guid id)
         {
-            return await _context.Posts
+            var post = await _context.Posts
                 .Include(p => p.Feed)
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null)
+                throw new KeyNotFoundException("Post with the provided ID not found");
+
+            return post;
         }
 
         public async Task<IEnumerable<Post>> GetAllPostsAsync()
@@ -30,10 +35,11 @@ namespace perenne.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddPostAsync(Post post)
+        public async Task<Post> CreatePostAsync(Post post)
         {
             await _context.Posts.AddAsync(post);
             await _context.SaveChangesAsync();
+            return post;
         }
 
         public async Task UpdatePostAsync(Post post)

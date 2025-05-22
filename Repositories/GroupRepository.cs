@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using perenne.Data;
+using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
-using System.Text.RegularExpressions;
-
 
 namespace perenne.Repositories
 {
@@ -23,14 +22,50 @@ namespace perenne.Repositories
             return g.Entity;
         }
 
-        public async Task<Group?> GetGroupByIdAsync(Guid id)
+        public async Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id)
+        
         {
-            return await _context.Groups
-                .AsNoTracking()
+            var group = await _context.Groups
+                .Include(g => g.Members)
+                    .ThenInclude(gm => gm.User)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (group == null) 
+                throw new NullReferenceException("Não há grupos com esse ID");
+
+            var GroupFto = new GetGroupByIdFto
+            {
+                Name = group.Name,
+                Description = group.Description,
+                MemberList = group.Members.Select(gm => new MemberFto
+                {
+                    UserId = gm.UserId,
+                    FirstName = gm.User.FirstName,
+                    LastName = gm.User.LastName,
+                    RoleInGroup = gm.Role,
+                    IsBlocked = gm.IsBlocked,
+                    IsMutedInGroupChat = gm.IsMutedInGroupChat
+                }).ToList()
+            };
+
+            if(GroupFto == null)
+                throw new NullReferenceException("Não há grupos com esse ID");
+
+            return GroupFto;
+        }
+
+
+        public async Task<Group> GetGroupByIdAsync(Guid id)
+        {
+            var group = await _context.Groups
                 .Include(g => g.Members)
                 .Include(g => g.Feed)
                 .Include(g => g.ChatChannel)
                 .FirstOrDefaultAsync(g => g.Id == id);
+            if (group == null)
+                throw new NullReferenceException("Não há grupos com esse ID");
+
+            return group;
         }
 
         public async Task<IEnumerable<GroupListFto>> GetAllAsync()
@@ -47,7 +82,7 @@ namespace perenne.Repositories
             return result;
         }
 
-        public async Task<Group> AddAsync(Group group)
+        public async Task<Group> CreateGroupAsync(Group group)
         {
             var entry = await _context.Groups.AddAsync(group);
             Group g = entry.Entity;
@@ -100,7 +135,6 @@ namespace perenne.Repositories
         }
 
         // Group Member Operations
-
         public async Task<GroupMember> AddGroupMemberAsync(GroupMember member)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
@@ -114,10 +148,9 @@ namespace perenne.Repositories
 
             // Check if user exists
             var userExists = await _context.Users.AnyAsync(u => u.Id == member.UserId);
+            
             if (!userExists)
-            {
                 throw new InvalidOperationException($"User with ID {member.UserId} not found.");
-            }
 
             // Check if member already exists
             var existingMember = await _context.GroupMembers
@@ -130,7 +163,6 @@ namespace perenne.Repositories
             if (member.User != null) _context.Entry(member.User).State = EntityState.Unchanged;
             if (member.Group != null) _context.Entry(member.Group).State = EntityState.Unchanged;
 
-
             await _context.GroupMembers.AddAsync(member);
             await _context.SaveChangesAsync();
 
@@ -140,20 +172,5 @@ namespace perenne.Repositories
 
             return member; // Return the newly created GroupMember entity
         }
-
-
-        /*
-        public async Task<Feed?> GetFeedAsync(Guid groupId)
-        {
-            return await _context.Feeds
-                .FirstOrDefaultAsync(f => f.GroupId == groupId);
-        }
-
-        public async Task<ChatChannel?> GetChatChannelAsync(Guid groupId)
-        {
-            return await _context.ChatChannels
-                .FirstOrDefaultAsync(c => c.GroupId == groupId);
-        }
-        */
     }
 }

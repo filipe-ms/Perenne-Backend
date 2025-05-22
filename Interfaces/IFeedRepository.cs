@@ -5,11 +5,13 @@ namespace perenne.Interfaces
     public interface IFeedRepository
     {
         Task<Feed> CreateFeedAsync(Feed feed);
-        Task<Post?> GetPostByIdAsync(Guid id);
-        Task AddPostAsync(Post post);
+        
+        // Post
+        Task<Post> CreatePostAsync(Post post);
         Task UpdatePostAsync(Post post);
         Task DeletePostAsync(Guid id);
-        
+        Task<Post> GetPostByIdAsync(Guid id);
+
         // Gets all
         Task<IEnumerable<Post>> GetPostsByFeedIdAsync(Guid feedId);
 

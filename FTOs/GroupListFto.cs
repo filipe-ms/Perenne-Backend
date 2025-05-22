@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace perenne.FTOs
+﻿namespace perenne.FTOs
 {
     public class GroupListFto
     {

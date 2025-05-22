@@ -24,9 +24,8 @@ namespace perenne.Repositories
         public async Task<ChatMessage> AddChatMessageAsync(ChatMessage message)
         {
             if (message == null)
-            {
                 throw new ArgumentNullException(nameof(message));
-            }
+
             var m = await _context.ChatMessages.AddAsync(message);
             await _context.SaveChangesAsync();
             return m.Entity;
@@ -45,6 +44,5 @@ namespace perenne.Repositories
                 .ToListAsync();
             return messages;
         }
-
     }
 }

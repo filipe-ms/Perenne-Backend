@@ -2,7 +2,8 @@
 using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
-using perenne.Repositories;
+// Assuming perenne.Repositories is where IGroupRepository is defined
+// using perenne.Repositories; 
 
 namespace perenne.Services
 {
@@ -26,7 +27,8 @@ namespace perenne.Services
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
-        public async Task<Group> CreateGroupAsync(GroupCreateDto dto)
+        // Modified to accept creatorUserId for auditing
+        public async Task<GroupCreateDto> CreateGroupAsync(GroupCreateDto dto)
         {
             Group group = new()
             {
@@ -35,33 +37,38 @@ namespace perenne.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            if (group == null) throw new ArgumentNullException(nameof(group));
+            var newgroup = await _repository.CreateGroupAsync(group);
+            if (newgroup == null)
+                throw new Exception("Failed to create the group in the repository.");
 
-            Group newgroup = await _repository.AddAsync(group);
 
             ChatChannel chat = new()
             {
                 CreatedAt = DateTime.UtcNow,
-                GroupId = newgroup.Id,
-                Group = newgroup
+                GroupId = newgroup.Id
             };
 
             Feed feed = new()
             {
                 CreatedAt = DateTime.UtcNow,
-                GroupId = newgroup.Id,
-                Group = newgroup
+                GroupId = newgroup.Id
             };
 
-            await _chatService.CreateChatChannelAsync(chat);
-            await _feedService.CreateFeedAsync(feed);
+            var createdChatChannel = await _chatService.CreateChatChannelAsync(chat);
+            var createdFeed = await _feedService.CreateFeedAsync(feed);
 
-            newgroup.ChatChannel = chat;
-            newgroup.Feed = feed;
-
+            newgroup.ChatChannel = createdChatChannel;
+            newgroup.Feed = createdFeed;
+            
             await _repository.UpdateGroupAsync(newgroup);
 
-            return newgroup;
+            GroupCreateDto groupCreateDto = new()
+            {
+                Name = newgroup.Name,
+                Description = newgroup.Description,
+            };
+
+            return groupCreateDto;
         }
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
@@ -71,56 +78,58 @@ namespace perenne.Services
             return group;
         }
 
-        public async Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userId)
+        public async Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id)
         {
-            var user = await _userService.GetUserByIdAsync(userId);
-            if (user == null)
-            {
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
-            }
+            var group = await _repository.GetDisplayGroupByIdAsync(id);
+            if (group == null)
+                throw new KeyNotFoundException($"Group with ID {id} not found");
+            return group;
+        }
+
+        public async Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userIdToAdd)
+        {
+            var userToAdd = await _userService.GetUserByIdAsync(userIdToAdd);
+            if (userToAdd == null)
+                throw new KeyNotFoundException($"User to add with ID {userIdToAdd} not found.");
 
             var group = await _repository.GetGroupByIdAsync(groupId);
             if (group == null)
-            {
                 throw new KeyNotFoundException($"Group with ID {groupId} not found.");
-            }
 
             GroupMember newMember = new()
             {
                 Role = GroupRole.Member,
                 IsBlocked = false,
                 IsMutedInGroupChat = false,
-                UserId = userId,
+                UserId = userIdToAdd,
                 GroupId = groupId,
                 CreatedAt = DateTime.UtcNow,
-                User = await _userService.GetUserByIdAsync(userId),
-                Group = await GetGroupByIdAsync(groupId),
+                User = await _userService.GetUserByIdAsync(userIdToAdd),
+                Group = await GetGroupByIdAsync(groupId)
             };
 
             var createdMember = await _repository.AddGroupMemberAsync(newMember);
+            if (createdMember == null)
+                throw new Exception("Failed to add member to the group in the repository.");
+            
 
             return new GroupMembershipFto
             {
                 GroupId = createdMember.GroupId,
-                GroupName = createdMember.Group.Name,
+                GroupName = createdMember.Group?.Name ?? group.Name, // Fallback if not loaded
                 UserId = createdMember.UserId,
-                UserFirstName = createdMember.User.FirstName,
-                UserLastName = createdMember.User.LastName,
+                UserFirstName = createdMember.User?.FirstName ?? userToAdd.FirstName, // Fallback
+                UserLastName = createdMember.User?.LastName ?? userToAdd.LastName,   // Fallback
                 RoleInGroup = createdMember.Role,
                 JoinedAt = createdMember.CreatedAt,
-                Message = $"User {user.FirstName} successfully joined group {group.Name}."
+                Message = $"User {userToAdd.FirstName} successfully joined group {group.Name}."
             };
         }
 
-        public async Task<IEnumerable<GroupListFto>> GetAllAsync()
-        {
-            return await _repository.GetAllAsync();
-        }
+        public async Task<IEnumerable<GroupListFto>> GetAllAsync() =>
+            await _repository.GetAllAsync();
 
-        public async Task DeleteAsync(Guid id)
-        {
-            // you might want to check for existence first, or let the repo throw
+        public async Task DeleteAsync(Guid id) =>
             await _repository.DeleteAsync(id);
-        }
     }
 }

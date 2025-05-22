@@ -5,9 +5,10 @@ namespace perenne.Interfaces
 {
     public interface IGroupService
     {
-        Task<Group> CreateGroupAsync(GroupCreateDto dto);
-        Task<Group?> GetGroupByIdAsync(Guid id);
-        Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userId); 
+        Task<GroupCreateDto> CreateGroupAsync(GroupCreateDto dto);
+        Task<Group> GetGroupByIdAsync(Guid id);
+        Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id);
+        Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userIdToAdd);
         Task<IEnumerable<GroupListFto>> GetAllAsync();
         Task DeleteAsync(Guid id);
     }

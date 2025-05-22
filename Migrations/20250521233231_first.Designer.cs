@@ -12,8 +12,8 @@ using perenne.Data;
 namespace perenne.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250520232403_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20250521233231_first")]
+    partial class first
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

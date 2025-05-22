@@ -1,8 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using perenne.Models;
-using System.ComponentModel.DataAnnotations;
-
-namespace perenne.FTOs
+﻿namespace perenne.FTOs
 {
     public class GroupMembershipFto
     {
@@ -11,9 +7,8 @@ namespace perenne.FTOs
         public Guid UserId { get; set; }
         public required string UserFirstName { get; set; }
         public required string UserLastName { get; set; }
-        public GroupRole RoleInGroup { get; set; }
+        public GroupRole RoleInGroup { get; set; } = GroupRole.Member;
         public DateTime JoinedAt { get; set; }
         public string Message { get; set; } = "Successfully joined the group.";
-
     }
 }
