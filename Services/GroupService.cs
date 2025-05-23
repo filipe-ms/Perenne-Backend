@@ -61,14 +61,20 @@ namespace perenne.Services
             newgroup.Feed = createdFeed;
             
             await _repository.UpdateGroupAsync(newgroup);
-
             GroupCreateDto groupCreateDto = new()
             {
                 Name = newgroup.Name,
-                Description = newgroup.Description,
+                Description = newgroup.Description!
             };
 
             return groupCreateDto;
+        }
+        public async Task<string> DeleteGroupAsync(GroupDeleteDto dto)
+        {
+            Guid groupId = dto.GroupId;
+            string name = await _repository.DeleteGroupAsync(groupId);
+            if(string.IsNullOrEmpty(name)) throw new KeyNotFoundException($"Group with ID {groupId} not found");
+            return await _repository.DeleteGroupAsync(groupId); ;
         }
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
@@ -77,7 +83,6 @@ namespace perenne.Services
                 throw new KeyNotFoundException($"Group with ID {id} not found");
             return group;
         }
-
         public async Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id)
         {
             var group = await _repository.GetDisplayGroupByIdAsync(id);
@@ -85,7 +90,6 @@ namespace perenne.Services
                 throw new KeyNotFoundException($"Group with ID {id} not found");
             return group;
         }
-
         public async Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userIdToAdd)
         {
             var userToAdd = await _userService.GetUserByIdAsync(userIdToAdd);
@@ -125,11 +129,7 @@ namespace perenne.Services
                 Message = $"User {userToAdd.FirstName} successfully joined group {group.Name}."
             };
         }
-
         public async Task<IEnumerable<GroupListFto>> GetAllAsync() =>
             await _repository.GetAllAsync();
-
-        public async Task DeleteAsync(Guid id) =>
-            await _repository.DeleteAsync(id);
     }
 }

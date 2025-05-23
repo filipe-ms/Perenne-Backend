@@ -15,6 +15,22 @@ namespace perenne.Repositories
             _context = context;
         }
 
+        public async Task<Group> CreateGroupAsync(Group group)
+        {
+            var entry = await _context.Groups.AddAsync(group);
+            Group g = entry.Entity;
+            await _context.SaveChangesAsync();
+            return g;
+        }
+        public async Task<string> DeleteGroupAsync(Guid groupId)
+        {
+            var group = _context.Groups.Find(groupId); 
+            if (group == null) throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
+            var groupName = group.Name;
+            _context.Groups.Remove(group);
+            await _context.SaveChangesAsync();
+            return $"Grupo {groupName} removido com sucesso.";
+        }
         public async Task<Group> UpdateGroupAsync(Group group)
         {
             var g = _context.Groups.Update(group);
@@ -82,14 +98,7 @@ namespace perenne.Repositories
             return result;
         }
 
-        public async Task<Group> CreateGroupAsync(Group group)
-        {
-            var entry = await _context.Groups.AddAsync(group);
-            Group g = entry.Entity;
-            await _context.SaveChangesAsync();
-            return g;
-        }
-
+        
         public async Task DeleteAsync(Guid id)
         {
             var group = await GetGroupByIdAsync(id);

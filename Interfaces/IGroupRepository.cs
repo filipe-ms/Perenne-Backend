@@ -16,5 +16,6 @@ namespace perenne.Interfaces
         Task<GroupMember> AddGroupMemberAsync(GroupMember member);
         Task RemoveMemberAsync(Guid groupId, Guid userId);
         Task ChangeMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole);
+        Task<string> DeleteGroupAsync(Guid groupId);
     }
 }

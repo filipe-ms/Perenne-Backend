@@ -2,39 +2,22 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
 using perenne.Interfaces;
-using perenne.Models;
 using System.Security.Claims;
 
 namespace perenne.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class UserController(IUserService _userService) : ControllerBase
 {
-    
-    [HttpPost(nameof(Create))] // Criar usuário
-    public async Task Create( [FromBody] UserRegisterDto dto) =>
-        await _userService.RegisterUserAsync(dto);
-
-    [HttpPost(nameof(Login))] // Login
-    public async Task<User> Login( [FromBody] UserLoginDto dto)
-    {
-        var token = await _userService.LoginAsync(dto.Email, dto.Password);
-        return token;
-    }
-
-    [Authorize]
-    [HttpGet(nameof(GetGroups))] // Puxa os grupos de um usuário
+    // [host]/api/user/getgroups/
+    [HttpGet(nameof(GetGroups))]
     public async Task<ActionResult<IEnumerable<GroupSummaryDto>>> GetGroups()
     {
-        // Isso aqui pega o user ID baseado nas claims do JWT
+        // Pega o user ID baseado nas claims do JWT
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-
-        if (string.IsNullOrEmpty(userIdString))
-            return Unauthorized(new { message = $"[{nameof(GetGroups)}] Claim de User ID não encontrado na token." });
-
-        if (!Guid.TryParse(userIdString, out var userIdGuid))
-            return BadRequest(new { message = $"[{nameof(GetGroups)}] ID inválido registrado na token." });
+        Guid userIdGuid = _userService.ParseUserId(userIdString);
 
         try
         {
@@ -49,8 +32,8 @@ public class UserController(IUserService _userService) : ControllerBase
             {
                 Id = g.Id,
                 Name = g.Name,
-                Description = g.Description,
-                ChatChannelId = g.ChatChannel?.Id,
+                Description = g.Description!,
+                ChatChannelId = g.ChatChannel!.Id,
                 MemberCount = g.Members?.Count ?? 0
             }).ToList();
 
@@ -60,19 +43,11 @@ public class UserController(IUserService _userService) : ControllerBase
         {
             return NotFound(new { message = knfex.Message });
         }
+
         catch (Exception ex)
         {
-            Console.WriteLine($"[{nameof(GetGroups)}] Erro encontrando os grupos: {ex}");
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"[{nameof(GetGroups)}] Um erro ocorreu ao buscar os grupos do usuário." });
+            Console.WriteLine($"[{nameof(GetGroups)}] Um erro ocorreu ao buscar os grupos do usuário.\n\t->{ex}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente mais tarde." });
         }
     }
-
-    [HttpGet("ping")]
-    public ActionResult<string> TESTEPINGFRONT()
-    {
-        return "pong";
-    }
-
-
-    // PEIXOTO
 }

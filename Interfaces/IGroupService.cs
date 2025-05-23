@@ -10,6 +10,6 @@ namespace perenne.Interfaces
         Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id);
         Task<GroupMembershipFto> AddGroupMemberAsync(Guid groupId, Guid userIdToAdd);
         Task<IEnumerable<GroupListFto>> GetAllAsync();
-        Task DeleteAsync(Guid id);
+        Task<string> DeleteGroupAsync(GroupDeleteDto id);
     }
 }

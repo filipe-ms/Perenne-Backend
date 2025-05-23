@@ -10,7 +10,7 @@ namespace perenne.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class IdentityController(IOptions<JwtSettings> JwtSettings) : ControllerBase
+    public class AuthController(IOptions<JwtSettings> JwtSettings) : ControllerBase
     {
         [HttpPost(nameof(GenerateToken))]
         public IActionResult GenerateToken([FromBody] TokenGenerationRequest request)

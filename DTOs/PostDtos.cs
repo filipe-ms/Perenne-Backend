@@ -1,6 +1,6 @@
 ﻿namespace perenne.DTOs
 {
-    public class PostDto
+    public class PostDtos
     {
         public string? Title { get; set; }
         public string? Content { get; set; }

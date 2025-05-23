@@ -14,30 +14,6 @@ public class UserService : IUserService
         _userRepository = userRepository;
     }
 
-    public async Task RegisterUserAsync(UserRegisterDto dto)
-    {
-        var user = new User
-        {
-            Email = dto.Email,
-            Password = dto.Password,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            CPF = dto.CPF,
-            IsValidated = false,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _userRepository.AddUserAsync(user);
-    }
-
-    public async Task<User> LoginAsync(string email, string password)
-    {
-        var user = await _userRepository.GetUserByEmailAsync(email);
-        if (user == null || user.Password != password) 
-            throw new Exception("Invalid Email or Password");
-        return user;
-    }
-
     public async Task<User> GetUserByIdAsync(Guid id)
     {
         var user = await _userRepository.GetUserByIdAsync(id);
@@ -49,5 +25,15 @@ public class UserService : IUserService
     public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
     {
         return await _userRepository.GetGroupsByUserIdAsync(userId);
+    }
+
+    public Guid ParseUserId(string? str) 
+    {
+        if (string.IsNullOrEmpty(str))
+            throw new BadHttpRequestException($"[{nameof(ParseUserId)}] String não pode ser nula ou vazia.");
+        if (!Guid.TryParse(str, out var guid))
+            throw new BadHttpRequestException($"[{nameof(ParseUserId)}] String não é um GUID válido.");
+
+        return guid;
     }
 }

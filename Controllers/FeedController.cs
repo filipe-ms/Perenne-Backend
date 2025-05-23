@@ -23,7 +23,7 @@ namespace perenne.Controllers
 
         // [host]/api/feed/{groupIdString}/post    
         [HttpPost("{groupIdString}/post")]
-        public async Task<ActionResult<Post>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
+        public async Task<ActionResult<Post>> CreatePost(string groupIdString, [FromBody] PostDtos newPostDto)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 

@@ -4,22 +4,28 @@ using perenne.Models;
 
 namespace perenne.Repositories;
 
-public class UserRepository(ApplicationDbContext context) : IUserRepository
+public class UserRepository(ApplicationDbContext _context) : IUserRepository
 {
-    public async Task AddUserAsync(User user)
+    public async Task<bool> CreateUserAsync(User user)
     {
-        await context.Users.AddAsync(user);
-        await context.SaveChangesAsync();
+        if (user == null) throw new ArgumentNullException(nameof(user));
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+        return true;
     }
-    public async Task<User?> GetUserByEmailAsync(string email) =>
-        await context.Users.FirstOrDefaultAsync(u => u.Email == email);
-    public async Task<User?> GetUserByIdAsync(Guid id)
+    public async Task<User> GetUserByEmailAsync(string email)
     {
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return user == null ? throw new KeyNotFoundException($"User with email {email} not found.") : user;
+    }
+    public async Task<User> GetUserByIdAsync(Guid id)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user == null ? throw new KeyNotFoundException($"User with ID {id} not found.") : user;
     }
     public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
     {
-        var user = await context.Users
+        var user = await _context.Users
             .AsNoTracking()
             .Include(u => u.Groups)
                 .ThenInclude(gm => gm.Group)

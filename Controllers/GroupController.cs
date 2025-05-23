@@ -10,8 +10,17 @@ namespace perenne.Controllers
     [ApiController]
     [Authorize]
     [Route("api/[controller]")]
-    public class GroupController(IGroupService _groupService) : ControllerBase
+    public class GroupController : ControllerBase
     {
+        public readonly IGroupService _groupService;
+        public readonly IUserService _userService;
+
+        public GroupController(IGroupService groupService, IUserService userService)
+        {
+            _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        }   
+
         // [host]/api/group/create/
         [HttpPost(nameof(Create))]
         public async Task<ActionResult<GroupCreateDto>> Create([FromBody] GroupCreateDto dto)
@@ -24,6 +33,16 @@ namespace perenne.Controllers
             return Ok(ready);
         }
 
+        //[host]/api/group/delete/
+        [HttpDelete(nameof(Delete))]
+        public async Task<string> Delete([FromBody] GroupDeleteDto dto)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            _userService.ParseUserId(userIdString);
+            var result = await _groupService.DeleteGroupAsync(dto);
+            return result;
+        }
+
         [HttpPost("{groupIdString}/join")]
         public async Task<ActionResult<GroupMembershipFto>> JoinGroup(string groupIdString)
         {
@@ -31,8 +50,7 @@ namespace perenne.Controllers
                 return BadRequest("Invalid GUID");
             
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userIdGuid))
-                return Unauthorized("User ID could not be determined or is invalid.");
+            Guid userIdGuid = _userService.ParseUserId(userIdString);
 
             try
             {
@@ -49,6 +67,7 @@ namespace perenne.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[{nameof(JoinGroup)}] An error occurred while joining the group.\n\t->{ex}");
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while joining the group.");
             }
         }
@@ -63,19 +82,13 @@ namespace perenne.Controllers
         public async Task<ActionResult<GetGroupByIdFto>> GetGroupById(string id)
         {
             if (!Guid.TryParse(id, out Guid groupId))
-                return BadRequest("Invalid GUID format");
-            var group = await _groupService.GetDisplayGroupByIdAsync(groupId);
-            if (group == null)
-                return NotFound();
-            return group;
-        }
+                return BadRequest("Guid inválido!");
 
-        // [host]/api/group/delete/{groupId}/
-        [HttpDelete("delete/{id}")]
-        public async Task<ActionResult> Delete(Guid id)
-        {
-            await _groupService.DeleteAsync(id);
-            return NoContent();
+            var group = await _groupService.GetDisplayGroupByIdAsync(groupId);
+
+            if (group == null)
+                return NotFound("Grupo não encontrado!");
+            return group;
         }
     }
 }

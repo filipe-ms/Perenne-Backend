@@ -1,6 +1,4 @@
-﻿using perenne.Models;
-
-namespace perenne.DTOs
+﻿namespace perenne.DTOs
 {
     public class TokenGenerationRequest
     {
