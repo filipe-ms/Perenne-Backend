@@ -3,28 +3,19 @@ using perenne.Models;
 
 namespace perenne.Services
 {
-    public class ChatService : IChatService
+    public class ChatService(IChatRepository chatRepository) : IChatService
     {
-        private readonly IChatRepository _chatRepository;
+        private readonly IChatRepository _chatRepository = chatRepository ?? throw new ArgumentNullException(nameof(chatRepository));
 
-        public ChatService(IChatRepository chatRepository)
-        {
-            _chatRepository = chatRepository ?? throw new ArgumentNullException(nameof(chatRepository));
-
-        }
         public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel channel)
         {
-            if (channel == null)
-            {
-                throw new ArgumentNullException(nameof(channel));
-            }
+            ArgumentNullException.ThrowIfNull(channel);
             var c = await _chatRepository.CreateChatChannelAsync(channel);
             return c;
         }
         public async Task<ChatMessage> CreateChatMessageAsync(ChatMessage message)
         {
-            if (message == null)
-                throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             var m = await _chatRepository.CreateChatMessageAsync(message);
             return m;

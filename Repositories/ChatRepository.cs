@@ -5,14 +5,9 @@ using perenne.Models;
 
 namespace perenne.Repositories
 {
-    public class ChatRepository : IChatRepository
+    public class ChatRepository(ApplicationDbContext context) : IChatRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public ChatRepository(ApplicationDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+        private readonly ApplicationDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
         // Funções do chat
 
@@ -25,8 +20,7 @@ namespace perenne.Repositories
 
         public async Task<ChatMessage> CreateChatMessageAsync(ChatMessage message)
         {
-            if (message == null)
-                throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             var m = await _context.ChatMessages.AddAsync(message);
             await _context.SaveChangesAsync();

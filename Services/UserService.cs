@@ -1,28 +1,20 @@
-﻿using perenne.DTOs;
+﻿using perenne.Interfaces;
 using perenne.Models;
 using perenne.Repositories;
-using perenne.Interfaces;
 
 namespace perenne.Services;
 
-public class UserService : IUserService
+public class UserService(IUserRepository userRepository) : IUserService
 {
-    private readonly IUserRepository _userRepository;
-
-    public UserService(IUserRepository userRepository)
-    {
-        _userRepository = userRepository;
-    }
-
     public async Task<User> GetUserByIdAsync(Guid id)
     {
-        var user = await _userRepository.GetUserByIdAsync(id);
-        return user == null ? throw new Exception("User not found") : user;
+        var user = await userRepository.GetUserByIdAsync(id);
+        return user ?? throw new Exception("User not found");
     }
 
     public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
     {
-        return await _userRepository.GetGroupsByUserIdAsync(userId);
+        return await userRepository.GetGroupsByUserIdAsync(userId);
     }
 
     public Guid ParseUserId(string? str)

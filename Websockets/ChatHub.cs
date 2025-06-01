@@ -7,20 +7,9 @@ using perenne.Services;
 namespace perenne.Websockets
 {
     [Authorize]
-    public class ChatHub : Hub
+    public class ChatHub(IUserService userService, IGroupService groupService, IMessageCacheService messageCacheService) : Hub
     {
         public const string ChatHubPath = "/chatHub";
-
-        private readonly IMessageCacheService _MessageCacheService;
-        private readonly IGroupService _groupService;
-        private readonly IUserService _userService;
-
-        public ChatHub(IUserService userService, IGroupService groupService, IMessageCacheService messageCacheService)
-        {
-            _MessageCacheService = messageCacheService;
-            _groupService = groupService;
-            _userService = userService;
-        }
 
         public override async Task OnConnectedAsync()
         {
@@ -54,17 +43,9 @@ namespace perenne.Websockets
 
             try
             {
-                var group = await _groupService.GetGroupByIdAsync(groupIdGuid);
-                if (group == null)
-                {
-                    throw new HubException($"[ChatHub] Channel / Group with ID <{channelId}> not found.");
-                }
-
+                var group = await groupService.GetGroupByIdAsync(groupIdGuid) ?? throw new HubException($"[ChatHub] Channel / Group with ID <{channelId}> not found.");
                 var isMember = group.Members != null && group.Members.Any(m => m.UserId == userIdGuid);
-                if (!isMember)
-                {
-                    throw new HubException("[ChatHub] You are not a member of this channel.");
-                }
+                if (!isMember) throw new HubException("[ChatHub] You are not a member of this channel.");
 
                 // "Groups" is from SignalR, not related to our application's Groups
                 await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
@@ -104,26 +85,15 @@ namespace perenne.Websockets
 
             try
             {
-                var group = await _groupService.GetGroupByIdAsync(groupIdGuid);
-
-                if (group == null)
-                    throw new HubException($"Channel (Group) with ID '{channelIdString}' not found.");
-
+                var group = await groupService.GetGroupByIdAsync(groupIdGuid) ?? throw new HubException($"Channel (Group) with ID '{channelIdString}' not found.");
                 if (group.ChatChannel == null)
                     throw new HubException($"Chat channel not configured for group '{channelIdString}'.");
 
-                var member = group.Members?.FirstOrDefault(m => m.UserId == userIdGuid);
-
-                if (member == null)
-                    throw new HubException("You are not a member of this channel.");
-
+                var member = (group.Members?.FirstOrDefault(m => m.UserId == userIdGuid)) ?? throw new HubException("You are not a member of this channel.");
                 if (member.IsBlocked || member.IsMutedInGroupChat)
                     throw new HubException("You are not allowed to send messages in this channel (blocked or muted).");
 
-                var sender = await _userService.GetUserByIdAsync(userIdGuid);
-                if (sender == null)
-                    throw new HubException("Sender user details not found, although authenticated.");
-
+                var sender = await userService.GetUserByIdAsync(userIdGuid) ?? throw new HubException("Sender user details not found, although authenticated.");
                 var senderDisplayName = $"{sender.FirstName} {sender.LastName}";
 
                 var chatMessage = new ChatMessage
@@ -140,7 +110,7 @@ namespace perenne.Websockets
                     IsDeleted = false,
                 };
 
-                await _MessageCacheService.HandleChatMessageReceived(chatMessage);
+                await messageCacheService.HandleChatMessageReceived(chatMessage);
 
                 await Clients.Group(channelIdString).SendAsync("ReceiveMessage", senderDisplayName, messageContent, chatMessage.CreatedAt, userIdGuid.ToString());
             }
