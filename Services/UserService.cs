@@ -17,9 +17,7 @@ public class UserService : IUserService
     public async Task<User> GetUserByIdAsync(Guid id)
     {
         var user = await _userRepository.GetUserByIdAsync(id);
-        if (user == null) 
-            throw new Exception("User not found");
-        return user;
+        return user == null ? throw new Exception("User not found") : user;
     }
 
     public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
@@ -27,13 +25,12 @@ public class UserService : IUserService
         return await _userRepository.GetGroupsByUserIdAsync(userId);
     }
 
-    public Guid ParseUserId(string? str) 
+    public Guid ParseUserId(string? str)
     {
         if (string.IsNullOrEmpty(str))
-            throw new BadHttpRequestException($"[{nameof(ParseUserId)}] String não pode ser nula ou vazia.");
+            throw new ArgumentNullException($"[UserService] O parâmetro 'str' está nulo ou vazio. Um identificador de usuário é obrigatório.");
         if (!Guid.TryParse(str, out var guid))
-            throw new BadHttpRequestException($"[{nameof(ParseUserId)}] String não é um GUID válido.");
-
+            throw new ArgumentException($"[UserService] O valor fornecido não é um GUID válido.");
         return guid;
     }
 }

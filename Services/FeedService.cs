@@ -14,15 +14,18 @@ namespace perenne.Services
 
         public async Task<Post> CreatePostAsync(Post post) =>
             await _feedRepository.CreatePostAsync(post);
-        
 
         public async Task<IEnumerable<Post>> GetLastXPostsAsync(Guid feedId, int num)
         {
-            if (num <= 0)
-            {
-                return Enumerable.Empty<Post>();
-            }
+            if (num <= 0) return Enumerable.Empty<Post>();
             return await _feedRepository.GetLastXPostsAsync(feedId, num);
+        }
+
+        public async Task<bool> DeletePostAsync(Guid postId)
+        {
+            if (postId == Guid.Empty) throw new ArgumentException("Post ID cannot be empty.", nameof(postId));
+            var result = await _feedRepository.DeletePostAsync(postId);
+            return result;
         }
     }
 }

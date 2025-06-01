@@ -1,11 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using perenne.Models;
+﻿using perenne.Models;
 
 namespace perenne.DTOs
 {
-    public class UserLoginResponseDto
+    public record UserLoginResponseDto
     {
-        public User? User { get; set; }
-        public string? Token { get; set; }
+        public User? User { get; init; }
+        public string? Token { get; init; }
+
+        public UserLoginResponseDto(User user, string token)
+        {
+            this.User = user;
+            this.Token = token;
+        }
     }
 }

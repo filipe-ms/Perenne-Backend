@@ -2,7 +2,12 @@
 {
     public class TokenGenerationRequest
     {
-        public required Guid UserId { get; set; }
-        public required string Email { get; set; }
+        public Guid UserId { get; set; }
+        public string Email { get; set; }
+        public TokenGenerationRequest(Guid userId, string email)
+        {
+            UserId = userId;
+            Email = email;
+        }
     }
 }

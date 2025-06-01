@@ -7,8 +7,7 @@ namespace perenne.Models
         [Required]
         public required string Title { get; set; } = string.Empty;
 
-        [Required]
-        public required string Content { get; set; } = string.Empty;
+        public string? Content { get; set; } = string.Empty;
 
         public string? ImageUrl { get; set; }
 

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
+using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
 using System.Security.Claims;
+
 
 namespace perenne.Controllers
 {
@@ -21,9 +23,9 @@ namespace perenne.Controllers
             _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
         }
 
-        // [host]/api/feed/{groupIdString}/post    
-        [HttpPost("{groupIdString}/post")]
-        public async Task<ActionResult<Post>> CreatePost(string groupIdString, [FromBody] PostDtos newPostDto)
+        // [host]/api/feed/{groupIdString}/post
+        [HttpPost("{groupIdString}/createpost")]
+        public async Task<ActionResult<PostFto>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
         {
             var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
@@ -43,8 +45,8 @@ namespace perenne.Controllers
 
             var post = new Post
             {
-                Title = newPostDto.Title,
-                Content = newPostDto.Content,
+                Title = newPostDto.Title!,
+                Content = newPostDto.Content!,
                 FeedId = groupEntity.Feed.Id,
                 UserId = currentUserId,
                 CreatedById = currentUserId,
@@ -56,22 +58,52 @@ namespace perenne.Controllers
             if (createdPost == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the post." });
 
-            return Ok(createdPost);
+            var answer = new PostFto
+            {
+                Title = createdPost.Title,
+                Content = createdPost.Content,
+                Creator = createdPost.UserId,
+                ImageUrl = createdPost.ImageUrl,
+                CreatedAt = createdPost.CreatedAt
+            };
+
+            return Ok(answer);
         }
 
-        // [host]/api/feed/{feedId}/GetLast{num}Posts
-        [HttpGet("{feedIdString}/GetLast{num}Posts")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetLastXPosts(string feedIdString, int num)
+        // [host]/api/deletepost/{postIdString}
+        [HttpDelete("{groupIdString}/deletepost/{postIdString}")]
+        public async Task<IActionResult> DeletePost(string postIdString)
         {
-            if (!Guid.TryParse(feedIdString, out var feedId))
-                return BadRequest(new { message = "Invalid Feed ID format." });
+            if (!Guid.TryParse(postIdString, out var postId))
+                return BadRequest(new { result = false, message = "Invalid Post ID format." });
 
-            if (num <= 0)
-                return BadRequest(new { message = "Number of posts to retrieve must be positive." });
+            var result = await _feedService.DeletePostAsync(postId);
+            return Ok(result);   
+        }
 
+        // [host]/api/feed/{groupIdString}/getposts/{num}
+        [HttpGet("{groupIdString}/getposts/{num}")]
+        public async Task<ActionResult<IEnumerable<PostFto>>> GetLastXPosts(string groupIdString, int num)
+        {
+            if (!Guid.TryParse(groupIdString, out var groupId)) return BadRequest(new { message = "Invalid Feed ID format." });
+            if (num <= 0) return BadRequest(new { message = "Number of posts to retrieve must be positive." });
+
+            var group = await _groupService.GetGroupByIdAsync(groupId);
+            var feedId = group.Feed!.Id;
             var posts = await _feedService.GetLastXPostsAsync(feedId, num);
 
-            return Ok(posts);
+            var answer = posts.Select((Post x) =>
+            new PostFto()
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Content = x.Content,
+                ImageUrl = x.ImageUrl,
+                Creator = (Guid)x.CreatedById!,
+                CreatedAt = x.CreatedAt
+            });
+
+            return Ok(answer);
         }
     }
 }

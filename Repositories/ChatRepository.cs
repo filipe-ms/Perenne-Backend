@@ -14,14 +14,14 @@ namespace perenne.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<ChatChannel> AddChatChannelAsync(ChatChannel chat)
+        public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel chat)
         {
             var c = await _context.ChatChannels.AddAsync(chat);
             await _context.SaveChangesAsync();
             return c.Entity;
         }
 
-        public async Task<ChatMessage> AddChatMessageAsync(ChatMessage message)
+        public async Task<ChatMessage> CreateChatMessageAsync(ChatMessage message)
         {
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
@@ -31,17 +31,14 @@ namespace perenne.Repositories
             return m.Entity;
         }
 
-        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatid, int num)
+        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatId, int num)
         {
-            if (num <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(num), "Número de mensagens deve ser maior que 0.");
-            }
             var messages = await _context.ChatMessages
-                .Where(m => m.ChatChannelId == chatid)
+                .Where(m => m.ChatChannelId == chatId)
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(num)
                 .ToListAsync();
+            
             return messages;
         }
     }

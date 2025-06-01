@@ -82,14 +82,14 @@ namespace perenne.Data
             modelBuilder.Entity<Feed>()
                 .HasMany(f => f.Posts)
                 .WithOne(p => p.Feed)
-                .HasForeignKey("FeedId")
+                .HasForeignKey(p => p.FeedId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Post configuration
             modelBuilder.Entity<Post>()
                 .HasOne(p => p.User)
                 .WithMany()
-                .HasForeignKey("UserId")
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure enum conversions

@@ -70,7 +70,6 @@ namespace perenne.Repositories
             return GroupFto;
         }
 
-
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
             var group = await _context.Groups
@@ -98,7 +97,6 @@ namespace perenne.Repositories
             return result;
         }
 
-        
         public async Task DeleteAsync(Guid id)
         {
             var group = await GetGroupByIdAsync(id);

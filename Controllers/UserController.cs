@@ -23,25 +23,17 @@ public class UserController(IUserService _userService) : ControllerBase
         {
             var groups = await _userService.GetGroupsByUserIdAsync(userIdGuid);
 
-            if (groups == null || !groups.Any())
-            {
-                return Ok(Enumerable.Empty<GroupSummaryDto>());
-            }
+            if (groups == null || !groups.Any()) return Ok(Enumerable.Empty<GroupSummaryDto>());
 
             var groupDtos = groups.Select(g => new GroupSummaryDto
             {
                 Id = g.Id,
                 Name = g.Name,
                 Description = g.Description!,
-                ChatChannelId = g.ChatChannel!.Id,
                 MemberCount = g.Members?.Count ?? 0
             }).ToList();
 
             return Ok(groupDtos);
-        }
-        catch (KeyNotFoundException knfex)
-        {
-            return NotFound(new { message = knfex.Message });
         }
 
         catch (Exception ex)

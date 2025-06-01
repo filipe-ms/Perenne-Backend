@@ -48,7 +48,7 @@ namespace perenne.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeletePostAsync(Guid id)
+        public async Task<bool> DeletePostAsync(Guid id)
         {
             var post = await GetPostByIdAsync(id);
             if (post != null)
@@ -56,6 +56,7 @@ namespace perenne.Repositories
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
             }
+            return true;
         }
 
         public async Task<IEnumerable<Post>> GetPostsByFeedIdAsync(Guid feedId)
@@ -68,19 +69,17 @@ namespace perenne.Repositories
         }
 
         public async Task<IEnumerable<Post>> GetLastXPostsAsync(Guid feedId, int num)
-        {
-            if (num <= 0)
-            {
-                return Enumerable.Empty<Post>();
-            }
+        { 
+            if (num <= 0) return Enumerable.Empty<Post>();
 
-            return await _context.Posts
+            var response = await _context.Posts
                 .Where(p => p.FeedId == feedId)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(num)
                 .Include(p => p.User)
                 .AsNoTracking()
                 .ToListAsync();
+            return response;
         }
     }
 }

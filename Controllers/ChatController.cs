@@ -6,14 +6,29 @@ namespace perenne.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatController(IChatService _chatService) : ControllerBase
+    public class ChatController : ControllerBase
     {
-        // Pega as últimas X mensagens
-        [HttpGet("{chatid}/GetLast{num}Messages")]
-        public async Task<IEnumerable<ChatMessage>> GetLastXMessages(Guid chatid, int num)
+        private readonly IChatService _chatService;
+        private readonly IGroupService _groupService;
+
+        public ChatController(IChatService chatService, IGroupService groupService)
         {
-            var messages = await _chatService.GetLastXMessagesAsync(chatid, num);
-            return messages;
+            _chatService = chatService ?? throw new ArgumentNullException(nameof(chatService));
+            _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
+        }
+
+        // Pega as últimas X mensagens
+        [HttpGet("{groupIdString}/getmessages/{num}")]
+        public async Task<ActionResult<IEnumerable<ChatMessage>>> GetLastXMessages(string groupIdString, int num)
+        {
+            if(!Guid.TryParse(groupIdString, out Guid groupId)) return BadRequest(new { message = "Id de Grupo inválido na URL." });
+            if (num <= 0) return BadRequest(new { message = "Número de posts deve ser positivo." });
+
+            var group = await _groupService.GetGroupByIdAsync(groupId);
+            var chatId = group.ChatChannel!.Id;
+            var messages = await _chatService.GetLastXMessagesAsync(chatId, num);
+            
+            return Ok(messages);
         }
     }
 }

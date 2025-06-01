@@ -139,7 +139,7 @@ namespace perenne.Websockets
                     IsDeleted = false,
                 };
 
-                await _chatService.AddChatMessageAsync(chatMessage);
+                await _chatService.CreateChatMessageAsync(chatMessage);
 
                 await Clients.Group(channelIdString).SendAsync("ReceiveMessage", senderDisplayName, messageContent, chatMessage.CreatedAt, userIdGuid.ToString());
             }

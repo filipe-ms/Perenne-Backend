@@ -34,8 +34,9 @@ namespace perenne.Controllers
             if (dto == null || dto.Email == null || dto.Password == null)
                 throw new ArgumentNullException(nameof(dto));
 
-            var token = await _guestService.UserLoginAsync(dto.Email, dto.Password);
-            return token;
+            var user = await _guestService.UserLoginAsync(dto.Email, dto.Password);
+
+            return user;
         }
     }
 }
