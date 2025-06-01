@@ -37,7 +37,6 @@ namespace perenne.Repositories
             await _context.SaveChangesAsync();
             return g.Entity;
         }
-
         public async Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id)
         
         {
@@ -69,7 +68,6 @@ namespace perenne.Repositories
 
             return GroupFto;
         }
-
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
             var group = await _context.Groups
@@ -82,7 +80,6 @@ namespace perenne.Repositories
 
             return group;
         }
-
         public async Task<IEnumerable<GroupListFto>> GetAllAsync()
         {
             var groups = await _context.Groups.ToListAsync();

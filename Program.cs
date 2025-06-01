@@ -95,6 +95,9 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Chat Cache
+builder.Services.AddScoped<IMessageCacheService, MessageCacheService>();
+
 // Feed
 builder.Services.AddScoped<IFeedRepository, FeedRepository>();
 builder.Services.AddScoped<IFeedService, FeedService>();
@@ -116,5 +119,24 @@ app.MapHub<ChatHub>(ChatHub.ChatHubPath);
 app.MapControllers();
 
 app.Urls.Add("http://0.0.0.0:5000");
+
+
+// Iniciando o cache de mensagens
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var messageCacheService = services.GetRequiredService<IMessageCacheService>();
+        await messageCacheService.InitMessageCacheServiceAsync();
+        Console.WriteLine("Cache de mensagens inicializado com sucesso!");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocorreu um erro ao tentar inicializar o cache de mensagens.");
+    }
+}
 
 app.Run();

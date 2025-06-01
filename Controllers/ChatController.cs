@@ -6,15 +6,22 @@ namespace perenne.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatController : ControllerBase
+    public class ChatController(IMessageCacheService messageCacheService, IChatService chatService, IGroupService groupService) : ControllerBase
     {
-        private readonly IChatService _chatService;
-        private readonly IGroupService _groupService;
+        private readonly IMessageCacheService _messageCacheService = messageCacheService ?? throw new ArgumentNullException(nameof(messageCacheService));
+        private readonly IChatService _chatService = chatService ?? throw new ArgumentNullException(nameof(chatService));
+        private readonly IGroupService _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
 
-        public ChatController(IChatService chatService, IGroupService groupService)
+        // Pega as mensagens em cache
+        [HttpGet("{groupIdString}/getcachedmessages")]
+        public async Task<ActionResult<IEnumerable<ChatMessage>>> GetCachedMessages(string groupIdString)
         {
-            _chatService = chatService ?? throw new ArgumentNullException(nameof(chatService));
-            _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
+            if (!Guid.TryParse(groupIdString, out Guid groupId)) return BadRequest(new { message = "Id de Grupo inválido na URL." });
+            var group = await _groupService.GetGroupByIdAsync(groupId);
+            if (group == null) return NotFound(new { message = "Grupo não encontrado." });
+            var chatId = group.ChatChannel!.Id;
+            var messages = await _messageCacheService.GetMessagesByChatChannelIdAsync(chatId);
+            return Ok(messages);
         }
 
         // Pega as últimas X mensagens

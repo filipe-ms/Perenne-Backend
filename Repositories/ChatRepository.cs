@@ -14,6 +14,8 @@ namespace perenne.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
+        // Funções do chat
+
         public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel chat)
         {
             var c = await _context.ChatChannels.AddAsync(chat);
@@ -38,8 +40,32 @@ namespace perenne.Repositories
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(num)
                 .ToListAsync();
-            
+
             return messages;
+        }
+
+        // Funções do cache
+
+        public async Task<IEnumerable<ChatMessage>> RetrieveChatMessageHistoryForCache()
+        {
+            var channelIds = await _context.ChatChannels
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            var result = new List<ChatMessage>();
+
+            foreach (var channelId in channelIds)
+            {
+                var messages = await _context.ChatMessages
+                    .Where(m => m.ChatChannelId == channelId)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Take(100)
+                    .ToListAsync();
+
+                result.AddRange(messages);
+            }
+
+            return result;
         }
     }
 }

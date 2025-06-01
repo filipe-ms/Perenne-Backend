@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using perenne.Interfaces;
 using perenne.Models;
+using perenne.Services;
 
 namespace perenne.Websockets
 {
@@ -10,13 +11,13 @@ namespace perenne.Websockets
     {
         public const string ChatHubPath = "/chatHub";
 
-        private readonly IChatService _chatService;
+        private readonly IMessageCacheService _MessageCacheService;
         private readonly IGroupService _groupService;
         private readonly IUserService _userService;
 
-        public ChatHub(IUserService userService, IGroupService groupService, IChatService chatService)
+        public ChatHub(IUserService userService, IGroupService groupService, IMessageCacheService messageCacheService)
         {
-            _chatService = chatService;
+            _MessageCacheService = messageCacheService;
             _groupService = groupService;
             _userService = userService;
         }
@@ -139,7 +140,7 @@ namespace perenne.Websockets
                     IsDeleted = false,
                 };
 
-                await _chatService.CreateChatMessageAsync(chatMessage);
+                await _MessageCacheService.HandleChatMessageReceived(chatMessage);
 
                 await Clients.Group(channelIdString).SendAsync("ReceiveMessage", senderDisplayName, messageContent, chatMessage.CreatedAt, userIdGuid.ToString());
             }

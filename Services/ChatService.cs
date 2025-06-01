@@ -12,7 +12,6 @@ namespace perenne.Services
             _chatRepository = chatRepository ?? throw new ArgumentNullException(nameof(chatRepository));
 
         }
-
         public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel channel)
         {
             if (channel == null)
@@ -22,7 +21,6 @@ namespace perenne.Services
             var c = await _chatRepository.CreateChatChannelAsync(channel);
             return c;
         }
-
         public async Task<ChatMessage> CreateChatMessageAsync(ChatMessage message)
         {
             if (message == null)
@@ -31,7 +29,6 @@ namespace perenne.Services
             var m = await _chatRepository.CreateChatMessageAsync(message);
             return m;
         }
-
         public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatId, int num)
         {
             var messages = await _chatRepository.GetLastXMessagesAsync(chatId, num);
