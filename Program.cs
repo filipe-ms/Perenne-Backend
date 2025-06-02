@@ -3,23 +3,17 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using perenne.Data;
+using perenne.Interfaces;
+using perenne.Repositories;
+using perenne.Services;
 using perenne.Websockets;
 using System.Text;
 
-// Removed the placeholder User : IdentityUser class as you provided User.cs
-// Removed the placeholder ApplicationDbContext as you provided ApplicationDbContext.cs
-
-// Define placeholder JwtSettings class if not provided elsewhere in your models
-// This is to make the example runnable. Replace with your actual class if you have one.
-// Placeholder for ChatHub removed as you provided perenne.Websockets.ChatHub
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Kestrel to listen on the port provided by Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// --- JWT Configuration ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.Key == "DefaultKey_MustBeOverriddenInProduction")
 {
@@ -29,15 +23,12 @@ if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.
 }
 builder.Services.AddSingleton(jwtSettings); // Or Scoped/Transient as appropriate
 
-// --- Database Configuration (PostgreSQL) ---
-// Uses your perenne.Data.ApplicationDbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
 {
     Console.WriteLine("WARNING: Database connection string 'DefaultConnection' not found. Using local fallback if in Development.");
     if (builder.Environment.IsDevelopment())
     {
-        // IMPORTANT: Replace with your actual local development connection string
         connectionString = "Host=localhost;Port=5432;Database=perenne_dev_db;Username=postgres;Password=yourlocalpassword;";
     }
     else
@@ -48,20 +39,7 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<ApplicationDbContext>(options => // This is your perenne.Data.ApplicationDbContext
     options.UseNpgsql(connectionString));
 
-// --- ASP.NET Core Identity NOT USED directly with perenne.Models.User ---
-// The following lines for AddIdentity are removed/commented out because
-// your perenne.Models.User does not inherit from IdentityUser and
-// your ApplicationDbContext does not inherit from IdentityDbContext.
-// You will need to implement custom user management (password hashing, user creation, role checks)
-// in your service layer.
 
-// builder.Services.AddIdentity<User, IdentityRole>() // User here would need to be an IdentityUser
-//     .AddEntityFrameworkStores<ApplicationDbContext>() // ApplicationDbContext would need to be an IdentityDbContext
-//     .AddDefaultTokenProviders();
-
-// --- Authentication (JWT Bearer) ---
-// This setup assumes you will manually create JWTs upon successful custom login
-// and include necessary claims (like user ID and role from your UserRole enum).
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,7 +61,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// --- Forwarded Headers for Reverse Proxy (Render) ---
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -91,7 +68,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// --- CORS Configuration ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins", policy =>
@@ -113,25 +89,34 @@ builder.Services.AddCors(options =>
     });
 });
 
-// --- Application Services (Repositories, Services, etc.) ---
-// Register your application-specific services that will handle logic like
-// user creation (with password hashing), login, group management, etc.
-// Example:
-// builder.Services.AddScoped<perenne.Interfaces.IUserService, perenne.Services.UserService>(); // Your custom UserService
-// builder.Services.AddScoped<perenne.Interfaces.ITokenService, perenne.Services.TokenService>(); // Your custom service to generate JWTs
-// ... register your other services from perenne.Services, perenne.Repositories ...
-// Example for services used by ChatHub:
-// builder.Services.AddScoped<perenne.Interfaces.IUserService, perenne.Services.UserService>();
-// builder.Services.AddScoped<perenne.Interfaces.IGroupService, perenne.Services.GroupService>();
-// builder.Services.AddSingleton<perenne.Interfaces.IMessageCacheService, perenne.Services.MessageCacheService>(); // Or Scoped/Transient
+// Guest
+builder.Services.AddScoped<IGuestService, GuestService>();
 
+// User
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
-// --- SignalR Configuration ---
+// Group
+builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+builder.Services.AddScoped<IGroupService, GroupService>();
+
+// Chat
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+// Chat Cache
+builder.Services.AddScoped<IMessageCacheService, MessageCacheService>();
+
+// Feed
+builder.Services.AddScoped<IFeedRepository, FeedRepository>();
+builder.Services.AddScoped<IFeedService, FeedService>();
+
+// SignalR
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
-}
-);
+});
+
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddControllers();
@@ -139,15 +124,13 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// --- HTTP Request Pipeline ---
 app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-    // Optional: Apply migrations on startup for dev convenience.
-    // Ensure your ApplicationDbContext is correctly configured for migrations.
+
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     try
@@ -166,11 +149,9 @@ if (app.Environment.IsDevelopment())
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>(); // Ou o nome da sua classe Program
+        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while migrating the database.");
-        // Considere se a aplicação deve parar ou continuar se a migração falhar.
-        // Em produção, pode ser preferível que a aplicação não inicie se as migrações falharem.
-        throw; // Re-lançar a exceção pode impedir o app de iniciar se a migração falhar.
+        throw;
     }
 }
 else // Production
@@ -182,9 +163,8 @@ else // Production
 
 app.UseRouting();
 
-// Authentication middleware must come before Authorization.
-app.UseAuthentication(); // This will use the JWT Bearer handler.
-app.UseAuthorization();  // Authorization policies can be set up based on claims in the JWT.
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 // Map your actual ChatHub from perenne.Websockets namespace using its defined path
