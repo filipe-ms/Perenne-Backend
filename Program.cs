@@ -33,6 +33,7 @@ if (string.IsNullOrEmpty(connectionString))
     }
     else
     {
+        Console.WriteLine("ERROR: Database connection string 'DefaultConnection' not found in Production. Lançando exceção.");
         throw new InvalidOperationException("Database connection string 'DefaultConnection' not found and not in Development environment.");
     }
 }
