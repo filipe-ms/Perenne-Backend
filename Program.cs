@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using perenne.Data;
 using perenne.Interfaces;
 using perenne.Repositories;
@@ -14,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
+// --- JWT Configuration ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.Key == "DefaultKey_MustBeOverriddenInProduction")
 {
@@ -21,30 +23,79 @@ if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.
     if (jwtSettings == null) jwtSettings = new JwtSettings();
     if (string.IsNullOrEmpty(jwtSettings.Key)) jwtSettings.Key = "SuperSecretKeyThatIsAtLeast32BytesLongForHS256_ReplaceInConfig";
 }
-
 builder.Services.AddSingleton(jwtSettings);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim();
-if (string.IsNullOrEmpty(connectionString))
+
+// --- Database Configuration with URI parsing ---
+string? rawConn = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim()
+                  ?? Environment.GetEnvironmentVariable("DATABASE_URL")?.Trim();
+
+if (string.IsNullOrEmpty(rawConn))
 {
-    Console.WriteLine("WARNING: Database connection string 'DefaultConnection' not found. Using local fallback if in Development.");
+    Console.WriteLine("WARNING: Database connection string 'DefaultConnection' or 'DATABASE_URL' not found. Using local fallback if in Development.");
     if (builder.Environment.IsDevelopment())
     {
-        connectionString = "Host=localhost;Port=5432;Database=perenne_dev_db;Username=postgres;Password=yourlocalpassword;";
+        rawConn = "Host=localhost;Port=5432;Database=perenne_dev_db;Username=postgres;Password=yourlocalpassword;";
     }
     else
     {
-        Console.WriteLine("ERROR: Database connection string 'DefaultConnection' not found in Production. Lançando exceção.");
-        throw new InvalidOperationException("Database connection string 'DefaultConnection' not found and not in Development environment.");
+        Console.WriteLine("ERROR: Database connection string 'DefaultConnection' or 'DATABASE_URL' not found in Production. Throwing exception.");
+        throw new InvalidOperationException("Database connection string not found and not in Development environment.");
     }
 }
 
-Console.WriteLine($"DEBUG_CONNECTION_STRING_FINAL: String de conexão a ser usada por UseNpgsql: '{connectionString}'");
+string npgsqlConn;
+if (rawConn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+ || rawConn.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+{
+    Console.WriteLine($"DEBUG: Detected URI-style connection string: '{rawConn}'");
+    try
+    {
+        var uri = new Uri(rawConn);
+        var userInfo = uri.UserInfo.Split(':');
+        var dbUser = userInfo.Length > 0 ? userInfo[0] : string.Empty;
+        var dbPass = userInfo.Length > 1 ? userInfo[1] : string.Empty;
+        var dbHost = uri.Host;
+        var dbPort = uri.Port > 0 ? uri.Port : 5432;
+        var dbName = uri.AbsolutePath.TrimStart('/');
+
+        var csb = new NpgsqlConnectionStringBuilder
+        {
+            Host = dbHost,
+            Port = dbPort,
+            Database = dbName,
+            Username = dbUser,
+            Password = dbPass,
+            SslMode = SslMode.Require
+        };
+        npgsqlConn = csb.ToString();
+        Console.WriteLine($"DEBUG: Converted URI to Npgsql connection string: '{npgsqlConn}'");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR: Failed to parse URI connection string '{rawConn}'. Exception: {ex.Message}");
+        throw;
+    }
+}
+else
+{
+    npgsqlConn = rawConn;
+    Console.WriteLine($"DEBUG: Using provided key/value connection string: '{npgsqlConn}'");
+    if (!npgsqlConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) &&
+        !npgsqlConn.Contains("Ssl Mode", StringComparison.OrdinalIgnoreCase) &&
+        !npgsqlConn.Contains("SSL Mode", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine("WARNING: Key/value connection string for non-localhost does not explicitly set SslMode. Appending SslMode=Require;TrustServerCertificate=true;");
+        npgsqlConn = npgsqlConn.TrimEnd(';') + ";Ssl Mode=Require;Trust Server Certificate=true;";
+    }
+}
+
+Console.WriteLine($"DEBUG_FINAL_CONNECTION_STRING_TO_USE: '{npgsqlConn}'");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(npgsqlConn));
 
-
+// Mais coisa de JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -66,6 +117,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Headers
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -73,6 +125,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins", policy =>
@@ -84,59 +137,50 @@ builder.Services.AddCors(options =>
         var frontendUrl = builder.Configuration["FrontendUrl"];
         if (string.IsNullOrEmpty(frontendUrl))
         {
-            Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS might be too open or fail.");
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().AllowCredentials(); // Fallback, less secure
-        }
-        else
-        {
-            policy.WithOrigins(frontendUrl.Split(',')).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+            Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
+        } else {
+            policy.WithOrigins(frontendUrl.Split(','))
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
         }
     });
 });
 
-// Guest
+// Injection
 builder.Services.AddScoped<IGuestService, GuestService>();
-
-// User
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-
-// Group
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupService, GroupService>();
-
-// Chat
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
-
-// Chat Cache
 builder.Services.AddScoped<IMessageCacheService, MessageCacheService>();
-
-// Feed
 builder.Services.AddScoped<IFeedRepository, FeedRepository>();
 builder.Services.AddScoped<IFeedService, FeedService>();
 
-// SignalR
+// --- SignalR ---
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 });
-
 builder.Services.AddDistributedMemoryCache();
 
+// --- Outros Serviços ---
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
+// --- Build WebApplication ---
 var app = builder.Build();
 
+// --- HTTP Request Pipeline ---
 app.UseForwardedHeaders();
 
-
-// SÓ ENQUANTO A GENTE NÃO FAZ O ENTRYPOINT.SH
+// Aplicação de Migrações (executa em todos os ambientes)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
+    var logger = services.GetRequiredService<ILogger<Program>>(); // Use o nome da sua classe Program
     try
     {
         logger.LogInformation("Attempting to apply database migrations (all environments)...");
@@ -154,7 +198,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        logger.LogError(ex, "An error occurred while migrating the database. Application might not start correctly.");
     }
 }
 
@@ -162,23 +206,25 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-} else {
+}
+else // Produção
+{
     app.UseCors("ProductionPolicy");
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Error"); // Endpoint para erros genéricos
     app.UseHsts();
 }
 
+app.UseHttpsRedirection(); // Adicionado para segurança, se o Render não fizer isso por padrão
+
 app.UseRouting();
 
-app.UseAuthentication();
+app.UseAuthentication(); // Deve vir antes de UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.MapHub<ChatHub>(ChatHub.ChatHubPath);
-
-app.MapHealthChecks("/healthz"); // Para o deploy no Render
-
-app.MapGet("/Error", () => Results.Problem("An error occurred.", statusCode: 500));
+app.MapHealthChecks("/healthz");
+app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
+   .ExcludeFromDescription(); // Para não aparecer no Swagger/OpenAPI
 
 app.Run();
