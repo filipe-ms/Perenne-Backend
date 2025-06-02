@@ -37,7 +37,10 @@ if (string.IsNullOrEmpty(connectionString))
         throw new InvalidOperationException("Database connection string 'DefaultConnection' not found and not in Development environment.");
     }
 }
-builder.Services.AddDbContext<ApplicationDbContext>(options => // This is your perenne.Data.ApplicationDbContext
+
+Console.WriteLine($"DEBUG_CONNECTION_STRING_FINAL: String de conexão a ser usada por UseNpgsql: '{connectionString}'");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 
