@@ -148,22 +148,29 @@ if (app.Environment.IsDevelopment())
     app.UseCors("AllowAllOrigins");
     // Optional: Apply migrations on startup for dev convenience.
     // Ensure your ApplicationDbContext is correctly configured for migrations.
-    using (var scope = app.Services.CreateScope())
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    try
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); // Your perenne.Data.ApplicationDbContext
-        try
+        var dbContext = services.GetRequiredService<ApplicationDbContext>(); // Sua classe ApplicationDbContext
+        if (dbContext.Database.GetPendingMigrations().Any())
         {
-            if (dbContext.Database.GetPendingMigrations().Any())
-            {
-                Console.WriteLine("Applying database migrations (Development)...");
-                dbContext.Database.Migrate();
-                Console.WriteLine("Database migrations applied successfully.");
-            }
+            Console.WriteLine("Applying database migrations...");
+            dbContext.Database.Migrate(); // Aplica as migrações pendentes
+            Console.WriteLine("Database migrations applied successfully.");
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+            Console.WriteLine("No pending migrations to apply.");
         }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>(); // Ou o nome da sua classe Program
+        logger.LogError(ex, "An error occurred while migrating the database.");
+        // Considere se a aplicação deve parar ou continuar se a migração falhar.
+        // Em produção, pode ser preferível que a aplicação não inicie se as migrações falharem.
+        throw; // Re-lançar a exceção pode impedir o app de iniciar se a migração falhar.
     }
 }
 else // Production
