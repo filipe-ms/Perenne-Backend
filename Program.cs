@@ -1,15 +1,10 @@
-// Program.cs - Configured for Render Deployment with Custom User Model
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-// using Microsoft.AspNetCore.Identity; // No longer using ASP.NET Core Identity directly with perenne.Models.User
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
-// Assuming your models and DbContext are in these namespaces based on your files
-using perenne.Models;
 using perenne.Data;
-using perenne.Websockets; // Added for your ChatHub
+using perenne.Websockets;
+using System.Text;
 
 // Removed the placeholder User : IdentityUser class as you provided User.cs
 // Removed the placeholder ApplicationDbContext as you provided ApplicationDbContext.cs
@@ -132,7 +127,8 @@ builder.Services.AddCors(options =>
 
 
 // --- SignalR Configuration ---
-builder.Services.AddSignalR(options => {
+builder.Services.AddSignalR(options =>
+{
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 }
 );
