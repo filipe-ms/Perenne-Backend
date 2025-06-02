@@ -15,18 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// --- JWT Configuration ---
+// Configuração das opções JWT
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.Key == "DefaultKey_MustBeOverriddenInProduction")
-{
-    Console.WriteLine("WARNING: JWT Key is not configured or using default. THIS IS INSECURE FOR PRODUCTION.");
-    if (jwtSettings == null) jwtSettings = new JwtSettings();
-    if (string.IsNullOrEmpty(jwtSettings.Key)) jwtSettings.Key = "SuperSecretKeyThatIsAtLeast32BytesLongForHS256_ReplaceInConfig";
-}
-builder.Services.AddSingleton(jwtSettings);
 
 
-// --- Database Configuration with URI parsing ---
+// Database Configuration with URI parsing
 string? rawConn = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim()
                   ?? Environment.GetEnvironmentVariable("DATABASE_URL")?.Trim();
 
@@ -106,14 +100,29 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-        ClockSkew = TimeSpan.Zero
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments(ChatHub.ChatHubPath))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
