@@ -10,7 +10,7 @@ namespace perenne.Controllers
     public class GuestController(IGuestService _guestService) : ControllerBase
     {
         // [host]/api/guest/create/
-        [HttpPost(nameof(Create))]
+        [HttpPost("create")]
         public async Task<bool> Create([FromBody] GuestRegisterDto dto)
         {
             var user = new User
@@ -28,7 +28,7 @@ namespace perenne.Controllers
         }
         
         // [host]/api/guest/login/
-        [HttpPost(nameof(Login))]
+        [HttpPost("login")]
         public async Task<User> Login([FromBody] GuestLoginDto dto)
         {
             if (dto == null || dto.Email == null || dto.Password == null)
