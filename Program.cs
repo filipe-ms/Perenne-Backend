@@ -156,40 +156,49 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Injection
+// Guest
 builder.Services.AddScoped<IGuestService, GuestService>();
+
+// User
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+// Group
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupService, GroupService>();
+
+// Chat
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
+
+// Message Cache
 builder.Services.AddScoped<IMessageCacheService, MessageCacheService>();
+
+// Feed
 builder.Services.AddScoped<IFeedRepository, FeedRepository>();
 builder.Services.AddScoped<IFeedService, FeedService>();
 
-// --- SignalR ---
+// SignalR
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 });
 builder.Services.AddDistributedMemoryCache();
 
-// --- Outros Serviços ---
+// Outros Serviços
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
-// --- Build WebApplication ---
 var app = builder.Build();
 
-// --- HTTP Request Pipeline ---
+// HTTP Request Pipeline
 app.UseForwardedHeaders();
 
-// Aplicação de Migrações (executa em todos os ambientes)
+// Migrações
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>(); // Use o nome da sua classe Program
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
         logger.LogInformation("Attempting to apply database migrations (all environments)...");
@@ -215,8 +224,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-}
-else // Produção
+} else // Produção
 {
     app.UseCors("ProductionPolicy");
     app.UseExceptionHandler("/Error"); // Endpoint para erros genéricos
@@ -227,13 +235,13 @@ app.UseHttpsRedirection(); // Adicionado para segurança, se o Render não fizer i
 
 app.UseRouting();
 
-app.UseAuthentication(); // Deve vir antes de UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatHub>(ChatHub.ChatHubPath);
 app.MapHealthChecks("/healthz");
 app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
-   .ExcludeFromDescription(); // Para não aparecer no Swagger/OpenAPI
+   .ExcludeFromDescription();
 
 app.Run();
