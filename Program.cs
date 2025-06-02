@@ -21,9 +21,10 @@ if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.
     if (jwtSettings == null) jwtSettings = new JwtSettings();
     if (string.IsNullOrEmpty(jwtSettings.Key)) jwtSettings.Key = "SuperSecretKeyThatIsAtLeast32BytesLongForHS256_ReplaceInConfig";
 }
-builder.Services.AddSingleton(jwtSettings); // Or Scoped/Transient as appropriate
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddSingleton(jwtSettings);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim();
 if (string.IsNullOrEmpty(connectionString))
 {
     Console.WriteLine("WARNING: Database connection string 'DefaultConnection' not found. Using local fallback if in Development.");
@@ -130,36 +131,38 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseCors("AllowAllOrigins");
 
-    using var scope = app.Services.CreateScope();
+// SÓ ENQUANTO A GENTE NÃO FAZ O ENTRYPOINT.SH
+using (var scope = app.Services.CreateScope())
+{
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
-        var dbContext = services.GetRequiredService<ApplicationDbContext>(); // Sua classe ApplicationDbContext
+        logger.LogInformation("Attempting to apply database migrations (all environments)...");
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
         if (dbContext.Database.GetPendingMigrations().Any())
         {
-            Console.WriteLine("Applying database migrations...");
-            dbContext.Database.Migrate(); // Aplica as migrações pendentes
-            Console.WriteLine("Database migrations applied successfully.");
+            logger.LogInformation("Applying database migrations...");
+            dbContext.Database.Migrate();
+            logger.LogInformation("Database migrations applied successfully.");
         }
         else
         {
-            Console.WriteLine("No pending migrations to apply.");
+            logger.LogInformation("No pending migrations to apply.");
         }
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while migrating the database.");
-        throw;
     }
 }
-else // Production
+
+if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
+    app.UseCors("AllowAllOrigins");
+} else {
     app.UseCors("ProductionPolicy");
     app.UseExceptionHandler("/Error");
     app.UseHsts();
@@ -171,9 +174,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-// Map your actual ChatHub from perenne.Websockets namespace using its defined path
+
 app.MapHub<ChatHub>(ChatHub.ChatHubPath);
-app.MapHealthChecks("/healthz");
+
+app.MapHealthChecks("/healthz"); // Para o deploy no Render
+
 app.MapGet("/Error", () => Results.Problem("An error occurred.", statusCode: 500));
 
 app.Run();
