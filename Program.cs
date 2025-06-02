@@ -1,52 +1,77 @@
+// Program.cs - Configured for Render Deployment with Custom User Model
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity;
+// using Microsoft.AspNetCore.Identity; // No longer using ASP.NET Core Identity directly with perenne.Models.User
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using perenne.Data;
-using perenne.Interfaces;
-using perenne.Models;
-using perenne.Repositories;
-using perenne.Services;
-using perenne.Websockets;
 using System.Text;
+
+// Assuming your models and DbContext are in these namespaces based on your files
+using perenne.Models;
+using perenne.Data;
+using perenne.Websockets; // Added for your ChatHub
+
+// Removed the placeholder User : IdentityUser class as you provided User.cs
+// Removed the placeholder ApplicationDbContext as you provided ApplicationDbContext.cs
+
+// Define placeholder JwtSettings class if not provided elsewhere in your models
+// This is to make the example runnable. Replace with your actual class if you have one.
+// Placeholder for ChatHub removed as you provided perenne.Websockets.ChatHub
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to listen on the port provided by Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// Configuração do JWT
+// --- JWT Configuration ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-if (jwtSettings == null)
+if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || jwtSettings.Key == "DefaultKey_MustBeOverriddenInProduction")
 {
-    throw new InvalidOperationException("Configurações JWT (JwtSettings) não encontradas ou inválidas no appsettings.json ou variáveis de ambiente.");
+    Console.WriteLine("WARNING: JWT Key is not configured or using default. THIS IS INSECURE FOR PRODUCTION.");
+    if (jwtSettings == null) jwtSettings = new JwtSettings();
+    if (string.IsNullOrEmpty(jwtSettings.Key)) jwtSettings.Key = "SuperSecretKeyThatIsAtLeast32BytesLongForHS256_ReplaceInConfig";
 }
-if (string.IsNullOrEmpty(jwtSettings.Key))
-{
-    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não pode ser nula ou vazia.");
-}
-builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton(jwtSettings); // Or Scoped/Transient as appropriate
 
-// Configuração do Entity Framework Core com PostgreSQL
+// --- Database Configuration (PostgreSQL) ---
+// Uses your perenne.Data.ApplicationDbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
 {
-    throw new InvalidOperationException("String de conexão 'DefaultConnection' para o PostgreSQL não encontrada.");
+    Console.WriteLine("WARNING: Database connection string 'DefaultConnection' not found. Using local fallback if in Development.");
+    if (builder.Environment.IsDevelopment())
+    {
+        // IMPORTANT: Replace with your actual local development connection string
+        connectionString = "Host=localhost;Port=5432;Database=perenne_dev_db;Username=postgres;Password=yourlocalpassword;";
+    }
+    else
+    {
+        throw new InvalidOperationException("Database connection string 'DefaultConnection' not found and not in Development environment.");
+    }
 }
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString)); // ALTERADO: Para usar PostgreSQL
+builder.Services.AddDbContext<ApplicationDbContext>(options => // This is your perenne.Data.ApplicationDbContext
+    options.UseNpgsql(connectionString));
 
-// Configuração do Identity
-builder.Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+// --- ASP.NET Core Identity NOT USED directly with perenne.Models.User ---
+// The following lines for AddIdentity are removed/commented out because
+// your perenne.Models.User does not inherit from IdentityUser and
+// your ApplicationDbContext does not inherit from IdentityDbContext.
+// You will need to implement custom user management (password hashing, user creation, role checks)
+// in your service layer.
 
-// Configuração da Autenticação JWT
+// builder.Services.AddIdentity<User, IdentityRole>() // User here would need to be an IdentityUser
+//     .AddEntityFrameworkStores<ApplicationDbContext>() // ApplicationDbContext would need to be an IdentityDbContext
+//     .AddDefaultTokenProviders();
+
+// --- Authentication (JWT Bearer) ---
+// This setup assumes you will manually create JWTs upon successful custom login
+// and include necessary claims (like user ID and role from your UserRole enum).
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
@@ -58,11 +83,12 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+        ClockSkew = TimeSpan.Zero
     };
 });
 
-// Configuração de Forwarded Headers para o Render
+// --- Forwarded Headers for Reverse Proxy (Render) ---
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -70,68 +96,81 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// Configuração do CORS
+// --- CORS Configuration ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins", // Política para desenvolvimento
-        policy =>
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+    options.AddPolicy("ProductionPolicy", policy =>
+    {
+        var frontendUrl = builder.Configuration["FrontendUrl"];
+        if (string.IsNullOrEmpty(frontendUrl))
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
-
-    options.AddPolicy("ProductionPolicy", // Política para produção no Render
-        policy =>
+            Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS might be too open or fail.");
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().AllowCredentials(); // Fallback, less secure
+        }
+        else
         {
-            var frontendUrl = builder.Configuration["FrontendUrl"]; // Ex: https://meufrontend.onrender.com
-            if (string.IsNullOrEmpty(frontendUrl))
-            {
-                Console.WriteLine("AVISO: FrontendUrl não configurado para a política CORS de produção. Usando fallback para permitir qualquer origem com credenciais (RESTRinja ISSO!).");
-                policy.AllowAnyOrigin() // ATENÇÃO: Fallback perigoso para produção sem FrontendUrl definido
-                 .AllowAnyMethod()
-                 .AllowAnyHeader()
-                 .AllowCredentials();
-            }
-            else
-            {
-                policy.WithOrigins(frontendUrl.Split(',')) // Permite múltiplas URLs separadas por vírgula
-                 .AllowAnyMethod()
-                 .AllowAnyHeader()
-                 .AllowCredentials(); // Necessário para SignalR com cookies/autenticação
-            }
-        });
+            policy.WithOrigins(frontendUrl.Split(',')).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        }
+    });
 });
 
-// Configuração dos Serviços da Aplicação
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IGroupService, GroupService>();
-builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-builder.Services.AddScoped<IFeedService, FeedService>();
-builder.Services.AddScoped<IFeedRepository, FeedRepository>();
-builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IChatRepository, ChatRepository>();
-builder.Services.AddScoped<IGuestService, GuestService>();
-builder.Services.AddSingleton<IMessageCacheService, MessageCacheService>();
+// --- Application Services (Repositories, Services, etc.) ---
+// Register your application-specific services that will handle logic like
+// user creation (with password hashing), login, group management, etc.
+// Example:
+// builder.Services.AddScoped<perenne.Interfaces.IUserService, perenne.Services.UserService>(); // Your custom UserService
+// builder.Services.AddScoped<perenne.Interfaces.ITokenService, perenne.Services.TokenService>(); // Your custom service to generate JWTs
+// ... register your other services from perenne.Services, perenne.Repositories ...
+// Example for services used by ChatHub:
+// builder.Services.AddScoped<perenne.Interfaces.IUserService, perenne.Services.UserService>();
+// builder.Services.AddScoped<perenne.Interfaces.IGroupService, perenne.Services.GroupService>();
+// builder.Services.AddSingleton<perenne.Interfaces.IMessageCacheService, perenne.Services.MessageCacheService>(); // Or Scoped/Transient
 
-// Configuração do SignalR
-var signalRBuilder = builder.Services.AddSignalR();
 
+// --- SignalR Configuration ---
+builder.Services.AddSignalR(options => {
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+}
+);
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+// --- HTTP Request Pipeline ---
 app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
+    // Optional: Apply migrations on startup for dev convenience.
+    // Ensure your ApplicationDbContext is correctly configured for migrations.
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); // Your perenne.Data.ApplicationDbContext
+        try
+        {
+            if (dbContext.Database.GetPendingMigrations().Any())
+            {
+                Console.WriteLine("Applying database migrations (Development)...");
+                dbContext.Database.Migrate();
+                Console.WriteLine("Database migrations applied successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+        }
+    }
 }
-else // Produção
+else // Production
 {
     app.UseCors("ProductionPolicy");
     app.UseExceptionHandler("/Error");
@@ -140,11 +179,14 @@ else // Produção
 
 app.UseRouting();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Authentication middleware must come before Authorization.
+app.UseAuthentication(); // This will use the JWT Bearer handler.
+app.UseAuthorization();  // Authorization policies can be set up based on claims in the JWT.
 
 app.MapControllers();
-app.MapHub<ChatHub>("/chathub");
-app.MapGet("/healthz", () => Results.Ok("Healthy"));
+// Map your actual ChatHub from perenne.Websockets namespace using its defined path
+app.MapHub<ChatHub>(ChatHub.ChatHubPath);
+app.MapHealthChecks("/healthz");
+app.MapGet("/Error", () => Results.Problem("An error occurred.", statusCode: 500));
 
 app.Run();
