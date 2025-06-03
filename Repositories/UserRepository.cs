@@ -39,4 +39,14 @@ public class UserRepository(ApplicationDbContext _context) : IUserRepository
 
         return user.Groups.Select(gm => gm.Group).ToList();
     }
+
+    public async Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if(user==null) throw new KeyNotFoundException($"Usuário com ID {userId} não encontrado.");
+        user.SystemRole = newRole;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

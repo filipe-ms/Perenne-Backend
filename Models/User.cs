@@ -2,12 +2,6 @@
 
 namespace perenne.Models
 {
-    public enum UserRole
-    {
-        Admin,
-        User,
-        Guest
-    }
     public class User : Entity
     {
         [Required, MinLength(4), MaxLength(100)]
@@ -16,7 +10,9 @@ namespace perenne.Models
         [Required, MinLength(6), MaxLength(100)]
         public required string Password { get; set; }
 
-        public bool IsValidated { get; set; } = true; //lembrar de rodar pra false
+        // Rodar para false no futuro,
+        // quando houver sistema de validação por e-mail.
+        public bool IsValidated { get; set; } = true; 
 
         public bool IsBanned { get; set; } = false;
 
@@ -30,7 +26,7 @@ namespace perenne.Models
         public required string CPF { get; set; }
 
         [Required]
-        public UserRole Role { get; set; } = UserRole.User;
+        public SystemRole SystemRole { get; set; } = SystemRole.User;
 
         public DateTime? DateOfBirth { get; set; }
 
@@ -48,6 +44,5 @@ namespace perenne.Models
 
         // Navigation property
         public virtual List<GroupMember> Groups { get; set; } = new();
-
     }
 }

@@ -11,7 +11,7 @@ namespace perenne.DTOs
     public record GroupDeleteDto
     {
         [Required(ErrorMessage = "O ID do grupo é obrigatório.")]
-        public Guid GroupId { get; init; }
+        public string GroupId { get; init; }
     }
 
     public record GroupCreateDto

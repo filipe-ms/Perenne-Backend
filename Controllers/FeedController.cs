@@ -12,17 +12,8 @@ namespace perenne.Controllers
     [ApiController]
     [Authorize]
     [Route("api/[controller]")]
-    public class FeedController : ControllerBase
+    public class FeedController(IFeedService feedService, IGroupService groupService) : ControllerBase
     {
-        private readonly IFeedService _feedService;
-        private readonly IGroupService _groupService;
-
-        public FeedController(IFeedService feedService, IGroupService groupService)
-        {
-            _feedService = feedService ?? throw new ArgumentNullException(nameof(feedService));
-            _groupService = groupService ?? throw new ArgumentNullException(nameof(groupService));
-        }
-
         // [host]/api/feed/{groupIdString}/post
         [HttpPost("{groupIdString}/createpost")]
         public async Task<ActionResult<PostFto>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
@@ -35,7 +26,7 @@ namespace perenne.Controllers
             if (string.IsNullOrEmpty(currentUserIdString) || !Guid.TryParse(currentUserIdString, out var currentUserId))
                 return Unauthorized(new { message = "Invalid or missing user ID." });
 
-            var groupEntity = await _groupService.GetGroupByIdAsync(groupId);
+            var groupEntity = await groupService.GetGroupByIdAsync(groupId);
 
             if (groupEntity == null)
                 return NotFound(new { message = $"Group not found with ID: {groupId}" });
@@ -54,7 +45,7 @@ namespace perenne.Controllers
                 CreatedAt = DateTime.UtcNow,
             };
 
-            var createdPost = await _feedService.CreatePostAsync(post);
+            var createdPost = await feedService.CreatePostAsync(post);
             if (createdPost == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the post." });
 
@@ -77,7 +68,7 @@ namespace perenne.Controllers
             if (!Guid.TryParse(postIdString, out var postId))
                 return BadRequest(new { result = false, message = "Invalid Post ID format." });
 
-            var result = await _feedService.DeletePostAsync(postId);
+            var result = await feedService.DeletePostAsync(postId);
             return Ok(result);   
         }
 
@@ -88,9 +79,9 @@ namespace perenne.Controllers
             if (!Guid.TryParse(groupIdString, out var groupId)) return BadRequest(new { message = "Invalid Feed ID format." });
             if (num <= 0) return BadRequest(new { message = "Number of posts to retrieve must be positive." });
 
-            var group = await _groupService.GetGroupByIdAsync(groupId);
+            var group = await groupService.GetGroupByIdAsync(groupId);
             var feedId = group.Feed!.Id;
-            var posts = await _feedService.GetLastXPostsAsync(feedId, num);
+            var posts = await feedService.GetLastXPostsAsync(feedId, num);
 
             var answer = posts.Select((Post x) =>
             new PostFto()

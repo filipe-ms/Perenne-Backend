@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
+using perenne.FTOs;
 using perenne.Interfaces;
 using System.Security.Claims;
 
@@ -9,7 +10,7 @@ namespace perenne.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class UserController(IUserService _userService) : ControllerBase
+public class UserController(IUserService userService) : ControllerBase
 {
     // [host]/api/user/getgroups/
     [HttpGet(nameof(GetGroups))]
@@ -17,11 +18,11 @@ public class UserController(IUserService _userService) : ControllerBase
     {
         // Pega o user ID baseado nas claims do JWT
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        Guid userIdGuid = _userService.ParseUserId(userIdString);
+        Guid userIdGuid = userService.ParseUserId(userIdString);
 
         try
         {
-            var groups = await _userService.GetGroupsByUserIdAsync(userIdGuid);
+            var groups = await userService.GetGroupsByUserIdAsync(userIdGuid);
 
             if (groups == null || !groups.Any()) return Ok(Enumerable.Empty<GroupSummaryDto>());
 
@@ -42,4 +43,44 @@ public class UserController(IUserService _userService) : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente mais tarde." });
         }
     }
+
+    // [host]/api/user/getuserinfo
+    [HttpGet(nameof(GetUserInfo))]
+    public async Task<ActionResult<ProfileInfoFTO>> GetUserInfo()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+        try
+        {
+            Guid userIdGuid = userService.ParseUserId(userIdString);
+
+            var user = await userService.GetUserByIdAsync(userIdGuid);
+            var groups = await userService.GetGroupsByUserIdAsync(userIdGuid);
+            var groupNames = groups.Select(g => g.Name).ToList() ?? [];
+
+            var userProfileInfo = new ProfileInfoFTO(user)
+            {
+                Groups = groupNames
+            };
+
+            return Ok(userProfileInfo);
+        }
+
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{nameof(GetUserInfo)}] Um erro ocorreu ao buscar as informações do usuário.\n\t->{ex}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro ao processar sua solicitação." });
+        }
+    }
+
+    // [host]/api/getuser/
+    [HttpGet("/{userIdString}")]
+    public async Task<ActionResult<ProfileInfoFTO>> GetUserInfoById(string userIdString)
+    {
+        var user = await userService.GetUserByIdAsync(userService.ParseUserId(userIdString));
+        var userFTO = new ProfileInfoFTO(user);
+        return Ok(userFTO);
+    }
 }
+
+

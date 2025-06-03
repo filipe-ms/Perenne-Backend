@@ -1,21 +1,21 @@
-﻿using perenne.DTOs;
-using perenne.FTOs;
+﻿using perenne.FTOs;
 using perenne.Models;
-using static GroupMember;
 
 namespace perenne.Interfaces
 {
     public interface IGroupRepository
     {
-        Task<Group> GetGroupByIdAsync(Guid id);
-        Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id);
+        // Group CRUD
         Task<IEnumerable<GroupListFto>> GetAllAsync();
+        Task<Group> GetGroupByIdAsync(Guid id);
         Task<Group> CreateGroupAsync(Group group);
+        Task<bool> DeleteGroupAsync(Guid groupId);
         Task<Group> UpdateGroupAsync(Group group);
-        Task DeleteAsync(Guid id);
+
+        // GroupMember Operations
         Task<GroupMember> AddGroupMemberAsync(GroupMember member);
-        Task RemoveMemberAsync(Guid groupId, Guid userId);
-        Task ChangeMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole);
-        Task<string> DeleteGroupAsync(Guid groupId);
+        Task<bool> RemoveMemberAsync(Guid groupId, Guid userId);
+        Task<bool> UpdateGroupMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole);
+        Task<GroupMember> GetGroupMemberAsync(Guid userId, Guid groupId);
     }
 }

@@ -4,7 +4,7 @@ namespace perenne.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ApiTestController : ControllerBase
+    public class TestController : ControllerBase
     {
         // [host]/api/apitest/ping
         [HttpGet("ping")]

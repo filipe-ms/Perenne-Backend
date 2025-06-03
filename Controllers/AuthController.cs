@@ -19,9 +19,9 @@ namespace perenne.Controllers
             var key = Encoding.UTF8.GetBytes(JwtSettings.Value.Key);
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Sub, request.UserId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, request.Email),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new(JwtRegisteredClaimNames.Sub, request.UserId.ToString()),
+                new(JwtRegisteredClaimNames.Email, request.Email),
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

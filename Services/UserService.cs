@@ -17,12 +17,20 @@ public class UserService(IUserRepository userRepository) : IUserService
         return await userRepository.GetGroupsByUserIdAsync(userId);
     }
 
-    public Guid ParseUserId(string? str)
+    public async Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole)
     {
-        if (string.IsNullOrEmpty(str))
-            throw new ArgumentNullException($"[UserService] O parâmetro 'str' está nulo ou vazio. Um identificador de usuário é obrigatório.");
-        if (!Guid.TryParse(str, out var guid))
-            throw new ArgumentException($"[UserService] O valor fornecido não é um GUID válido.");
+        return await userRepository.UpdateUserRoleInSystemAsync(userId, newRole);
+    }
+
+    public Guid ParseUserId(string? userIdString)
+    {
+        if (string.IsNullOrWhiteSpace(userIdString))
+            throw new ArgumentNullException(nameof(userIdString), "[UserService] O parâmetro 'userIdString' está nulo ou vazio. Um identificador de usuário é obrigatório.");
+
+        if (!Guid.TryParse(userIdString, out var guid))
+            throw new ArgumentException("[UserService] O valor fornecido não é um GUID válido.", nameof(userIdString));
+
         return guid;
     }
+
 }

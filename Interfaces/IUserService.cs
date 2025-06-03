@@ -1,5 +1,4 @@
-﻿using perenne.DTOs;
-using perenne.Models;
+﻿using perenne.Models;
 
 namespace perenne.Interfaces
 {
@@ -8,6 +7,6 @@ namespace perenne.Interfaces
         Task<User> GetUserByIdAsync(Guid id);
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId);
         Guid ParseUserId(string? str);
-
+        Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole);
     }
 }

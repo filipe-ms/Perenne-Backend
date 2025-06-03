@@ -39,14 +39,12 @@ namespace perenne.Services
         public async Task<ChatMessage> HandleChatMessageReceived(ChatMessage message)
         {
             ArgumentNullException.ThrowIfNull(message);
-
             var createdMessage = await _chatService.CreateChatMessageAsync(message);
 
             if (_messageCache != null)
             {
                 var queue = _messageCache.GetOrAdd(createdMessage.ChatChannelId, _ => new ConcurrentQueue<ChatMessage>());
                 queue.Enqueue(createdMessage);
-                
                 while (queue.Count > 100) queue.TryDequeue(out _);
             }
 

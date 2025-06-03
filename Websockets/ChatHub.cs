@@ -90,7 +90,7 @@ namespace perenne.Websockets
                     throw new HubException($"Chat channel not configured for group '{channelIdString}'.");
 
                 var member = (group.Members?.FirstOrDefault(m => m.UserId == userIdGuid)) ?? throw new HubException("You are not a member of this channel.");
-                if (member.IsBlocked || member.IsMutedInGroupChat)
+                if (member.IsBlocked || member.IsMuted)
                     throw new HubException("You are not allowed to send messages in this channel (blocked or muted).");
 
                 var sender = await userService.GetUserByIdAsync(userIdGuid) ?? throw new HubException("Sender user details not found, although authenticated.");

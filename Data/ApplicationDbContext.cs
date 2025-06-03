@@ -98,7 +98,7 @@ namespace perenne.Data
                 .HasConversion<string>();
 
             modelBuilder.Entity<User>()
-                .Property(u => u.Role)
+                .Property(u => u.SystemRole)
                 .HasConversion<string>();
 
             // Entity base class audit tracking configuration
@@ -117,5 +117,5 @@ namespace perenne.Data
     }
 }
 
-// dotnet ef migrations add InitialCreate
+// dotnet ef migrations add [nome da migração]
 // dotnet ef database update

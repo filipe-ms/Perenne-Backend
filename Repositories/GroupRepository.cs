@@ -1,66 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using perenne.Data;
-using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
+using perenne.Models;
 
 namespace perenne.Repositories
 {
     public class GroupRepository(ApplicationDbContext context) : IGroupRepository
     {
-        public async Task<Group> CreateGroupAsync(Group group)
-        {
-            var entry = await context.Groups.AddAsync(group);
-            Group g = entry.Entity;
-            await context.SaveChangesAsync();
-            return g;
-        }
-        public async Task<string> DeleteGroupAsync(Guid groupId)
-        {
-            var group = context.Groups.Find(groupId) ?? throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
-            var groupName = group.Name;
-            context.Groups.Remove(group);
-            await context.SaveChangesAsync();
-            return $"Grupo {groupName} removido com sucesso.";
-        }
-        public async Task<Group> UpdateGroupAsync(Group group)
-        {
-            var g = context.Groups.Update(group);
-            await context.SaveChangesAsync();
-            return g.Entity;
-        }
-        public async Task<GetGroupByIdFto> GetDisplayGroupByIdAsync(Guid id)
-        
-        {
-            var group = await context.Groups
-                .Include(g => g.Members)
-                .ThenInclude(gm => gm.User)
-                .FirstOrDefaultAsync(g => g.Id == id) ?? throw new NullReferenceException("Não há grupos com esse ID");
-            var GroupFto = new GetGroupByIdFto
-            {
-                Name = group.Name,
-                Description = group.Description,
-                MemberList = [.. group.Members.Select(gm => new MemberFto
-                {
-                    UserId = gm.UserId,
-                    FirstName = gm.User.FirstName,
-                    LastName = gm.User.LastName,
-                    RoleInGroup = gm.Role,
-                    IsBlocked = gm.IsBlocked,
-                    IsMutedInGroupChat = gm.IsMutedInGroupChat
-                })]
-            } ?? throw new NullReferenceException("Não há grupos com esse ID");
-            return GroupFto;
-        }
-        public async Task<Group> GetGroupByIdAsync(Guid id)
-        {
-            var group = await context.Groups
-                .Include(g => g.Members)
-                .Include(g => g.Feed)
-                .Include(g => g.ChatChannel)
-                .FirstOrDefaultAsync(g => g.Id == id) ?? throw new NullReferenceException("Não há grupos com esse ID");
-            return group;
-        }
+        // Group CRUD
         public async Task<IEnumerable<GroupListFto>> GetAllAsync()
         {
             var groups = await context.Groups.ToListAsync();
@@ -74,52 +22,39 @@ namespace perenne.Repositories
 
             return result;
         }
-
-        public async Task DeleteAsync(Guid id)
-        {
-            var group = await GetGroupByIdAsync(id);
-            if (group != null)
-            {
-                context.Groups.Remove(group);
-                await context.SaveChangesAsync();
-            }
-        }
-
-        public async Task RemoveMemberAsync(Guid groupId, Guid userId)
+        public async Task<Group> GetGroupByIdAsync(Guid id)
         {
             var group = await context.Groups
                 .Include(g => g.Members)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .Include(g => g.Feed)
+                .Include(g => g.ChatChannel)
+                .FirstOrDefaultAsync(g => g.Id == id);
 
-            if (group != null)
-            {
-                var member = group.Members.FirstOrDefault(m => m.UserId == userId);
-                if (member != null)
-                {
-                    group.Members.Remove(member);
-                    await context.SaveChangesAsync();
-                }
-            }
+            return group ?? throw new NullReferenceException("Não há grupos com esse ID");
         }
-
-        public async Task ChangeMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole)
+        public async Task<Group> CreateGroupAsync(Group group)
         {
-            var group = await context.Groups
-                .Include(g => g.Members)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
-
-            if (group != null)
-            {
-                var member = group.Members.FirstOrDefault(m => m.UserId == userId);
-                if (member != null)
-                {
-                    member.Role = newRole;
-                    await context.SaveChangesAsync();
-                }
-            }
+            var entry = await context.Groups.AddAsync(group);
+            Group g = entry.Entity;
+            await context.SaveChangesAsync();
+            return g;
+        }
+        public async Task<Group> UpdateGroupAsync(Group group)
+        {
+            var g = context.Groups.Update(group);
+            await context.SaveChangesAsync();
+            return g.Entity;
+        }
+        public async Task<bool> DeleteGroupAsync(Guid groupId)
+        {
+            var group = context.Groups.Find(groupId) ?? throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
+            context.Groups.Remove(group);
+            await context.SaveChangesAsync();
+            return true;
         }
 
-        // Group Member Operations
+
+        // GroupMember Operations
         public async Task<GroupMember> AddGroupMemberAsync(GroupMember member)
         {
             ArgumentNullException.ThrowIfNull(member);
@@ -133,7 +68,7 @@ namespace perenne.Repositories
 
             // Check if user exists
             var userExists = await context.Users.AnyAsync(u => u.Id == member.UserId);
-            
+
             if (!userExists)
                 throw new InvalidOperationException($"User with ID {member.UserId} not found.");
 
@@ -156,6 +91,48 @@ namespace perenne.Repositories
 
 
             return member; // Return the newly created GroupMember entity
+        }
+        public async Task<bool> RemoveMemberAsync(Guid groupId, Guid userId)
+        {
+            var group = await context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group != null)
+            {
+                var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+                if (member != null)
+                {
+                    group.Members.Remove(member);
+                    await context.SaveChangesAsync();
+                }
+            }
+            return true;
+        }
+        public async Task<bool> UpdateGroupMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole)
+        {
+            var group = await context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group != null)
+            {
+                var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+                if (member != null)
+                {
+                    member.Role = newRole;
+                    await context.SaveChangesAsync();
+                }
+            }
+            return true;
+        }
+        public async Task<GroupMember> GetGroupMemberAsync(Guid userId, Guid groupId)
+        {
+            var member = await context.GroupMembers
+                .Include(gm => gm.User)
+                .Include(gm => gm.Group)
+                .FirstOrDefaultAsync(gm => gm.UserId == userId && gm.GroupId == groupId);
+            return member ?? throw new KeyNotFoundException($"Member with User ID {userId} not found in Group ID {groupId}.");
         }
     }
 }

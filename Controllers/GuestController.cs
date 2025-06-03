@@ -7,7 +7,7 @@ namespace perenne.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class GuestController(IGuestService _guestService) : ControllerBase
+    public class GuestController(IGuestService guestService) : ControllerBase
     {
         // [host]/api/guest/create/
         [HttpPost("create")]
@@ -24,7 +24,7 @@ namespace perenne.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            return await _guestService.CreateUserAsync(user);
+            return await guestService.CreateUserAsync(user);
         }
         
         // [host]/api/guest/login/
@@ -34,7 +34,7 @@ namespace perenne.Controllers
             if (dto == null || dto.Email == null || dto.Password == null)
                 throw new ArgumentNullException(nameof(dto));
 
-            var user = await _guestService.UserLoginAsync(dto.Email, dto.Password);
+            var user = await guestService.UserLoginAsync(dto.Email, dto.Password);
 
             return user;
         }

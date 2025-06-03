@@ -1,39 +1,31 @@
 using Microsoft.EntityFrameworkCore;
-using perenne.Models;
 using System.ComponentModel.DataAnnotations;
-public enum GroupRole
+
+namespace perenne.Models
 {
-    Member,
-    Admin,
-    Moderator
-}
+    [Index(
+        nameof(GroupId), 
+        nameof(UserId), 
+        IsUnique = true)]
+    public class GroupMember
+    {
+        public GroupRole Role { get; set; } = GroupRole.Member;
+        public bool IsBlocked { get; set; } = false;
+        public bool IsMuted { get; set; } = false;
 
-[Index(nameof(GroupId), nameof(UserId), IsUnique = true)]
-public class GroupMember
-{
-    [Required]
-    public required GroupRole Role { get; set; }
-    public bool IsBlocked { get; set; } = false;
-    public bool IsMutedInGroupChat { get; set; } = false;
+        // Join Date
+        public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
-    // Audit fields
+        // Foreign keys
+        [Required]
+        public required Guid GroupId { get; init; }
 
-    [Required]
-    public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
-    public Guid? CreatedById { get; set; }
-    public Guid? UpdatedById { get; set; }
+        [Required]
+        public required Guid UserId { get; init; }
 
-    // Foreign keys
-    [Required]
-    public required Guid GroupId { get; set; }
+        // Navigation properties
+        public required User User { get; set; }
+        public required Group Group { get; set; }
 
-    [Required]
-    public required Guid UserId { get; set; }
-
-    // Navigation properties
-    public required User User { get; set; }
-    public required Group Group { get; set; }
-
-    
+    }
 }
