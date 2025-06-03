@@ -8,6 +8,8 @@ namespace perenne.Interfaces
         Task<User> GetUserByIdAsync(Guid id);
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId);
         Guid ParseUserId(string? str);
+        Task<UserInfoDto?> GetUserInfoAsync(Guid userId);
+
 
     }
 }

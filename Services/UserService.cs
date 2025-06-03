@@ -1,4 +1,5 @@
-﻿using perenne.Interfaces;
+﻿using perenne.DTOs;
+using perenne.Interfaces;
 using perenne.Models;
 using perenne.Repositories;
 
@@ -25,4 +26,33 @@ public class UserService(IUserRepository userRepository) : IUserService
             throw new ArgumentException($"[UserService] O valor fornecido não é um GUID válido.");
         return guid;
     }
+
+    public async Task<UserInfoDto?> GetUserInfoAsync(Guid userId)
+    {
+        var userEntity = await userRepository.GetUserByIdAsync(userId); 
+                                                                       
+        if (userEntity == null) 
+        {
+           return null; 
+        }
+
+        var groups = await userRepository.GetGroupsByUserIdAsync(userId);
+
+        var userInfoDto = new UserInfoDto
+        {
+            Email = userEntity.Email,
+            IsValidated = userEntity.IsValidated,
+            IsBanned = userEntity.IsBanned,
+            FirstName = userEntity.FirstName,
+            LastName = userEntity.LastName,
+            CPF = userEntity.CPF, 
+            ProfilePictureUrl = userEntity.ProfilePictureUrl, 
+            Groups = groups?.Select(g => g.Name).ToList() ?? new List<string>(), // pega os nomes dos grupos
+            CreatedAt = userEntity.CreatedAt
+        };
+
+        return userInfoDto;
+    }
+
+
 }

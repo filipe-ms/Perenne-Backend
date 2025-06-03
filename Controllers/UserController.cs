@@ -42,4 +42,42 @@ public class UserController(IUserService _userService) : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente mais tarde." });
         }
     }
+
+
+    // [host]/api/user/getuserinfo
+    [HttpGet(nameof(GetUserInfo))] 
+                                                           
+    public async Task<ActionResult<UserInfoDto>> GetUserInfo()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+        try
+        {
+            Guid userIdGuid = _userService.ParseUserId(userIdString); 
+
+            
+            var userInfoDto = await _userService.GetUserInfoAsync(userIdGuid);
+
+            if (userInfoDto == null)
+            {
+
+                return NotFound(new { message = "Usuário não encontrado." });
+            }
+
+            return Ok(userInfoDto);
+        }
+        
+        catch (KeyNotFoundException ex) 
+        {
+            Console.WriteLine($"[{nameof(GetUserInfo)}] Usuário não encontrado: {ex.Message}");
+            return NotFound(new { message = "usuario nao encontrado!", details = ex.Message });
+        }
+        catch (Exception ex) 
+        {
+            Console.WriteLine($"[{nameof(GetUserInfo)}] Um erro ocorreu ao buscar as informações do usuário.\n\t->{ex}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente mais tarde." });
+        }
+    }
+
+
 }
