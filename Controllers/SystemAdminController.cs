@@ -17,7 +17,6 @@ namespace perenne.Controllers
         [HttpPost(nameof(CreateGroup))]
         public async Task<ActionResult<GroupCreateDto>> CreateGroup([FromBody] GroupCreateDto dto)
         {
-            Console.WriteLine("CREATE_GROUP_DEBUG: \n" + dto + "\n====================");
             var user = await GetCurrentUser();
             if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem criar grupos.");
 

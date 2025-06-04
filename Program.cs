@@ -221,16 +221,16 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-} else
-{
-    app.UseCors("ProductionPolicy");
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
+//} else
+//{
+ //   app.UseCors("ProductionPolicy");
+ //   app.UseExceptionHandler("/Error");
+ //   app.UseHsts();
+//}
 
 app.UseHttpsRedirection();
 
