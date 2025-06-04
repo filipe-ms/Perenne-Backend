@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
-using perenne.Services;
 using System.Security.Claims;
 
 namespace perenne.Controllers;
@@ -74,7 +73,7 @@ public class UserController(IUserService userService, IGroupService groupService
     {
         var userId = GetCurrentUserId();
         if (userId == null) return Unauthorized(new { message = "Usuário não autenticado." });
-        
+
         var requests = await groupService.GetPendingRequestsForUserAsync(userId!.Value);
 
         var response = requests.Select(r => new

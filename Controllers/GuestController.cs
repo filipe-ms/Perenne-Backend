@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
+using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
 
@@ -29,14 +30,14 @@ namespace perenne.Controllers
         
         // [host]/api/guest/login/
         [HttpPost("login")]
-        public async Task<User> Login([FromBody] GuestLoginDto dto)
+        public async Task<ProfileInfoFTO> Login([FromBody] GuestLoginDto dto)
         {
             if (dto == null || dto.Email == null || dto.Password == null)
                 throw new ArgumentNullException(nameof(dto));
 
             var user = await guestService.UserLoginAsync(dto.Email, dto.Password);
-
-            return user;
+            var response = new ProfileInfoFTO(user);
+            return response;
         }
     }
 }

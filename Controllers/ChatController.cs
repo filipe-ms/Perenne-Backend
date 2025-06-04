@@ -4,6 +4,7 @@ using perenne.Interfaces;
 using perenne.Models;
 using System.Security.Claims;
 using perenne.DTOs;
+using perenne.FTOs;
 
 namespace perenne.Controllers
 {
@@ -18,19 +19,26 @@ namespace perenne.Controllers
     {
         // Pega as mensagens em cache
         [HttpGet("{groupIdString}/getcachedmessages")]
-        public async Task<ActionResult<IEnumerable<ChatMessage>>> GetCachedMessages(string groupIdString)
+        public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetCachedMessages(string groupIdString)
         {
             if (!Guid.TryParse(groupIdString, out Guid groupId)) return BadRequest(new { message = "Id de Grupo inválido na URL." });
             var group = await groupService.GetGroupByIdAsync(groupId);
             if (group == null) return NotFound(new { message = "Grupo não encontrado." });
             var chatId = group.ChatChannel!.Id;
             var messages = await messageCacheService.GetMessagesByChatChannelIdAsync(chatId);
-            return Ok(messages);
+
+            var response = messages.Select((msg) => new ChatMessageFTO(
+                msg.Message,
+                msg.IsRead,
+                msg.IsDelivered,
+                msg.ChatChannelId));
+
+            return Ok(response);
         }
 
         // Pega as últimas X mensagens
         [HttpGet("{groupIdString}/getmessages/{num}")]
-        public async Task<ActionResult<IEnumerable<ChatMessage>>> GetLastXMessages(string groupIdString, int num)
+        public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetLastXMessages(string groupIdString, int num)
         {
             if (!Guid.TryParse(groupIdString, out Guid groupId)) return BadRequest(new { message = "Id de Grupo inválido na URL." });
             if (num <= 0) return BadRequest(new { message = "Número de posts deve ser positivo." });
@@ -39,9 +47,16 @@ namespace perenne.Controllers
             var chatId = group.ChatChannel!.Id;
             var messages = await chatService.GetLastXMessagesAsync(chatId, num);
 
-            return Ok(messages);
+            var response = messages.Select((msg) => new ChatMessageFTO(
+                msg.Message,
+                msg.IsRead,
+                msg.IsDelivered,
+                msg.ChatChannelId));
+
+            return Ok(response);
         }
 
+        
         [HttpPost("private/start")]
         public async Task<ActionResult<object>> StartOrGetPrivateChat([FromBody] StartPrivateChatRequest request)
         {
@@ -61,34 +76,23 @@ namespace perenne.Controllers
                 return BadRequest(new { message = "Não é possível iniciar um chat consigo mesmo." });
             }
 
-            try
-            {
-                var chatChannel = await chatService.GetOrCreatePrivateChatChannelAsync(senderUserId, recipientUserId);
-                var recipientUser = await userService.GetUserByIdAsync(recipientUserId);
 
-                return Ok(new
+            var chatChannel = await chatService.GetOrCreatePrivateChatChannelAsync(senderUserId, recipientUserId);
+            var recipientUser = await userService.GetUserByIdAsync(recipientUserId);
+
+            return Ok(new
+            {
+                chatChannel.Id,
+                chatChannel.IsPrivate,
+                chatChannel.User1Id,
+                chatChannel.User2Id,
+                OtherParticipant = new
                 {
-                    chatChannel.Id,
-                    chatChannel.IsPrivate,
-                    User1Id = chatChannel.User1Id,
-                    User2Id = chatChannel.User2Id,
-                    OtherParticipant = new // Informações do outro usuário na conversa
-                    {
-                        Id = recipientUser?.Id.ToString(), // O ID do outro usuário
-                        DisplayName = recipientUser != null ? $"{recipientUser.FirstName} {recipientUser.LastName}" : "Usuário Desconhecido"
-                        // Adicione outros campos do usuário conforme necessário
-                    }
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                // Logar o erro
-                return StatusCode(500, new { message = "Ocorreu um erro ao iniciar o chat privado.", details = ex.Message });
-            }
+                    Id = recipientUser?.Id.ToString(),
+                    DisplayName = recipientUser != null ? $"{recipientUser.FirstName} {recipientUser.LastName}" : "Usuário Desconhecido"
+                }
+            });
+
         }
 
         [HttpGet("private/channels")]
@@ -123,7 +127,7 @@ namespace perenne.Controllers
                     LastMessage = cc.Messages.FirstOrDefault() != null ? new
                     {
                         Text = cc.Messages.First().Message,
-                        CreatedAt = cc.Messages.First().CreatedAt,
+                        cc.Messages.First().CreatedAt,
                         SenderId = cc.Messages.First().CreatedById
                     } : null
                 };
@@ -133,7 +137,7 @@ namespace perenne.Controllers
         }
 
         [HttpGet("private/{chatChannelIdString}/messages/{num}")]
-        public async Task<ActionResult<IEnumerable<ChatMessage>>> GetLastXPrivateMessages(string chatChannelIdString, int num)
+        public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetLastXPrivateMessages(string chatChannelIdString, int num)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid currentUserId))
@@ -152,7 +156,15 @@ namespace perenne.Controllers
             }
 
             var messages = await chatService.GetLastXMessagesAsync(chatChannelId, num);
-            return Ok(messages);
+
+            var response = messages.Select((msg) => new ChatMessageFTO(
+                msg.Message,
+                msg.IsRead,
+                msg.IsDelivered,
+                msg.ChatChannelId));
+
+
+            return Ok(response);
         }
     }
 }

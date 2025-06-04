@@ -189,6 +189,8 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
+builder.Services.AddOpenApi();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -230,7 +232,7 @@ if (app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseRouting();
 
@@ -242,5 +244,8 @@ app.MapHub<ChatHub>(ChatHub.ChatHubPath);
 app.MapHealthChecks("/healthz");
 app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
    .ExcludeFromDescription();
+
+
+app.MapOpenApi();
 
 app.Run();
