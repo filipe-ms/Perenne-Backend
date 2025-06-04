@@ -7,8 +7,8 @@ using System.Security.Claims;
 
 namespace perenne.Controllers
 {
-    [ApiController]
     [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class GroupController(IGroupService groupService, IUserService userService) : ControllerBase
     {

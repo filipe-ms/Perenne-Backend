@@ -1,15 +1,21 @@
 ﻿using perenne.Models;
-using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class ChatChannel : Entity
 {
     public List<ChatMessage> Messages { get; set; } = new();
 
-    // Foreign Key
-    [Required]
-    public Guid GroupId { get; set; }
+    // Chat de Grupos
+    public Guid? GroupId { get; set; }
+    public Group? Group { get; set; }
 
-    // Navigation Property
-    [Required]
-    public Group Group { get; set; } = null!;
+    // Chat privado
+    public bool IsPrivate { get; set; } = false;
+    public Guid? User1Id { get; set; }
+    [ForeignKey(nameof(User1Id))]
+    public User? User1 { get; set; }
+
+    public Guid? User2Id { get; set; }
+    [ForeignKey(nameof(User2Id))]
+    public User? User2 { get; set; }
 }

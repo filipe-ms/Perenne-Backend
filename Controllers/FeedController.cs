@@ -9,8 +9,8 @@ using System.Security.Claims;
 
 namespace perenne.Controllers
 {
-    [ApiController]
     [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class FeedController(IFeedService feedService, IGroupService groupService) : ControllerBase
     {

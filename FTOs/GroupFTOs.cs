@@ -23,5 +23,4 @@ namespace perenne.FTOs
     }
 
     public record GroupFTO(string Name, string Description, List<MemberFto>? MemberList);
-
 }

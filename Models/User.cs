@@ -44,5 +44,7 @@ namespace perenne.Models
 
         // Navigation property
         public virtual List<GroupMember> Groups { get; set; } = new();
+        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser1 { get; set; } = new List<ChatChannel>();
+        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser2 { get; set; } = new List<ChatChannel>();
     }
 }

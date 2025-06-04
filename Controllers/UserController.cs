@@ -73,11 +73,12 @@ public class UserController(IUserService userService) : ControllerBase
         }
     }
 
-    // [host]/api/getuser/
-    [HttpGet("/{userIdString}")]
+    // [host]/api/user/profile/{userIdString}
+    [HttpGet("profile/{userIdString}")]
     public async Task<ActionResult<ProfileInfoFTO>> GetUserInfoById(string userIdString)
     {
         var user = await userService.GetUserByIdAsync(userService.ParseUserId(userIdString));
+        if (user == null) return NotFound(new { message = $"Usuário com ID {userIdString} não encontrado." });
         var userFTO = new ProfileInfoFTO(user);
         return Ok(userFTO);
     }

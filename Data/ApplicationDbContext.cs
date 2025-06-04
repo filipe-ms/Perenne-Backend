@@ -71,12 +71,43 @@ namespace perenne.Data
                 .Property(gm => gm.Role)
                 .HasConversion<string>();
 
-            // ChatChannel configuration
+            // Relação ChatChannel → Messages
             modelBuilder.Entity<ChatChannel>()
                 .HasMany(cc => cc.Messages)
                 .WithOne(cm => cm.ChatChannel)
                 .HasForeignKey(cm => cm.ChatChannelId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatChannel>()
+                .HasOne(cc => cc.Group)
+                .WithOne(g => g.ChatChannel)
+                .HasForeignKey<ChatChannel>(cc => cc.GroupId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Novas relações para Chat Privado
+            modelBuilder.Entity<ChatChannel>()
+                .HasOne(cc => cc.User1)
+                .WithMany()
+                .HasForeignKey(cc => cc.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatChannel>()
+                .HasOne(cc => cc.User2)
+                .WithMany()
+                .HasForeignKey(cc => cc.User2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Novos Índices para ChatChannel
+            modelBuilder.Entity<ChatChannel>()
+                .HasIndex(cc => new { cc.User1Id, cc.User2Id, cc.IsPrivate })
+                .IsUnique()
+                .HasFilter("\"IsPrivate\" = true AND \"User1Id\" IS NOT NULL AND \"User2Id\" IS NOT NULL");
+
+            modelBuilder.Entity<ChatChannel>()
+                .HasIndex(cc => new { cc.GroupId, cc.IsPrivate })
+                .IsUnique()
+                .HasFilter("\"IsPrivate\" = false AND \"GroupId\" IS NOT NULL");
 
             // Feed configuration
             modelBuilder.Entity<Feed>()
@@ -112,6 +143,18 @@ namespace perenne.Data
                 .HasMany<User>()
                 .WithOne(e => e.UpdatedBy)
                 .HasForeignKey("UpdatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.PrivateChatChannelsAsUser1)
+                .WithOne(cc => cc.User1)
+                .HasForeignKey(cc => cc.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.PrivateChatChannelsAsUser2)
+                .WithOne(cc => cc.User2)
+                .HasForeignKey(cc => cc.User2Id)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

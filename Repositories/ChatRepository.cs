@@ -9,11 +9,26 @@ namespace perenne.Repositories
     {
         private readonly ApplicationDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-        // Funções do chat
-
-        public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel chat)
+        public async Task<ChatChannel> GetChatChannelByIdAsync(Guid chatChannelId)
         {
-            var c = await _context.ChatChannels.AddAsync(chat);
+            return await _context.ChatChannels
+                .Include(cc => cc.User1)
+                .Include(cc => cc.User2)
+                .Include(cc => cc.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+                .FirstOrDefaultAsync(cc => cc.Id == chatChannelId)
+                ?? throw new KeyNotFoundException($"Chat channel with ID {chatChannelId} not found.");
+        }
+
+        public async Task<ChatChannel> CreateChatChannelAsync(ChatChannel chatChannel)
+        {
+            ArgumentNullException.ThrowIfNull(chatChannel);
+
+            if (chatChannel.IsPrivate && chatChannel.User1Id.HasValue && chatChannel.User2Id.HasValue && chatChannel.User1Id.Value > chatChannel.User2Id.Value)
+            {
+               (chatChannel.User1Id, chatChannel.User2Id) = (chatChannel.User2Id, chatChannel.User1Id);
+            }
+
+            var c = await _context.ChatChannels.AddAsync(chatChannel);
             await _context.SaveChangesAsync();
             return c.Entity;
         }
@@ -27,14 +42,14 @@ namespace perenne.Repositories
             return m.Entity;
         }
 
-        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatId, int num)
+        public async Task<IEnumerable<ChatMessage>> GetLastXMessagesAsync(Guid chatChannelId, int num)
         {
             var messages = await _context.ChatMessages
-                .Where(m => m.ChatChannelId == chatId)
+                .Where(m => m.ChatChannelId == chatChannelId)
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(num)
+                .OrderBy(m => m.CreatedAt)
                 .ToListAsync();
-
             return messages;
         }
 
@@ -47,19 +62,38 @@ namespace perenne.Repositories
                 .ToListAsync();
 
             var result = new List<ChatMessage>();
-
             foreach (var channelId in channelIds)
             {
                 var messages = await _context.ChatMessages
                     .Where(m => m.ChatChannelId == channelId)
                     .OrderByDescending(m => m.CreatedAt)
                     .Take(100)
+                    .OrderBy(m => m.CreatedAt)
                     .ToListAsync();
-
                 result.AddRange(messages);
             }
-
             return result;
+        }
+
+        public async Task<ChatChannel?> GetPrivateChatChannelAsync(Guid user1Id, Guid user2Id)
+        {
+            var id1 = user1Id < user2Id ? user1Id : user2Id;
+            var id2 = user1Id < user2Id ? user2Id : user1Id;
+
+            return await _context.ChatChannels
+                .FirstOrDefaultAsync(cc => cc.IsPrivate &&
+                                      ((cc.User1Id == id1 && cc.User2Id == id2) ||
+                                       (cc.User1Id == id2 && cc.User2Id == id1)));
+        }
+
+        public async Task<IEnumerable<ChatChannel>> GetUserPrivateChatChannelsAsync(Guid userId)
+        {
+            return await _context.ChatChannels
+                .Where(cc => cc.IsPrivate && (cc.User1Id == userId || cc.User2Id == userId))
+                .Include(cc => cc.User1)
+                .Include(cc => cc.User2)
+                .Include(cc => cc.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
+                .ToListAsync();
         }
     }
 }

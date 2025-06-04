@@ -8,9 +8,9 @@ using perenne.Extensions;
 
 namespace perenne.Controllers
 {
-    [ApiController]
     [Authorize]
-    [Route("api/sysadmin")]
+    [ApiController]
+    [Route("api/[controller]")]
     public class SystemAdminController(IGroupService groupService, IUserService userService) : ControllerBase
     {
         // [host]/api/sysadmin/creategroup/
