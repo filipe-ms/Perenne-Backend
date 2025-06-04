@@ -143,16 +143,16 @@ builder.Services.AddCors(options =>
     });
     options.AddPolicy("ProductionPolicy", policy =>
     {
-        var frontendUrl = builder.Configuration["FrontendUrl"];
-        if (string.IsNullOrEmpty(frontendUrl))
-        {
-            Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
-        } else {
-            policy.WithOrigins(frontendUrl.Split(','))
+        //var frontendUrl = builder.Configuration["FrontendUrl"];
+        //if (string.IsNullOrEmpty(frontendUrl))
+        //{
+        //    Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
+        //} else {
+            policy//.WithOrigins(frontendUrl.Split(','))
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        }
+        //}
     });
 });
 
