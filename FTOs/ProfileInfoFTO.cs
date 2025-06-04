@@ -5,6 +5,7 @@ namespace perenne.FTOs
 {
     public record ProfileInfoFTO
     {
+        public Guid Id { get; init; }
         public string Email { get; init; }
         public string FirstName { get; init; }
         public string LastName { get; init; }
@@ -16,6 +17,7 @@ namespace perenne.FTOs
 
         public ProfileInfoFTO(User user)
         {
+            Id = user.Id;
             Email = user.Email;
             FirstName = user.FirstName;
             LastName = user.LastName;
