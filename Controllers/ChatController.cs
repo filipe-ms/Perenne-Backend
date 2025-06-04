@@ -163,7 +163,6 @@ namespace perenne.Controllers
                 msg.IsDelivered,
                 msg.ChatChannelId));
 
-
             return Ok(response);
         }
     }

@@ -6,7 +6,7 @@ namespace perenne.Controllers
     [Route("api/[controller]")]
     public class TestController : ControllerBase
     {
-        // [host]/api/apitest/ping
+        // [host]/api/test/ping
         [HttpGet("ping")]
         public ActionResult<string> CheckConnection() => "pong";
     }

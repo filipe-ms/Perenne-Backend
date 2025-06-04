@@ -12,19 +12,22 @@ namespace perenne.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class FeedController(IFeedService feedService, IGroupService groupService) : ControllerBase
+    public class FeedController(IFeedService feedService, IGroupService groupService, IUserService userService) : ControllerBase
     {
         // [host]/api/feed/{groupIdString}/post
         [HttpPost("{groupIdString}/createpost")]
         public async Task<ActionResult<PostFto>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
         {
-            var currentUserIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var user = await GetCurrentUser();
+            var groupId = groupService.ParseGroupId(groupIdString);
+            var membership = await groupService.GetGroupMemberAsync(user.Id, groupId);
 
-            if (!Guid.TryParse(groupIdString, out var groupId))
-                return BadRequest(new { message = "Invalid Group ID format in URL." });
+            if (user.SystemRole != SystemRole.Admin &&
+                user.SystemRole != SystemRole.SuperAdmin &&
+                membership.Role != GroupRole.Coordinator &&
+                membership.Role != GroupRole.Contributor)
+                return Unauthorized(new { message = "O membro não tem permissão para fazer postagens." });
 
-            if (string.IsNullOrEmpty(currentUserIdString) || !Guid.TryParse(currentUserIdString, out var currentUserId))
-                return Unauthorized(new { message = "Invalid or missing user ID." });
 
             var groupEntity = await groupService.GetGroupByIdAsync(groupId);
 
@@ -39,10 +42,9 @@ namespace perenne.Controllers
                 Title = newPostDto.Title!,
                 Content = newPostDto.Content!,
                 FeedId = groupEntity.Feed.Id,
-                UserId = currentUserId,
-                CreatedById = currentUserId,
-                ImageUrl = newPostDto.ImageUrl,
-                CreatedAt = DateTime.UtcNow,
+                UserId = user.Id,
+                CreatedById = user.Id,
+                ImageUrl = newPostDto.ImageUrl
             };
 
             var createdPost = await feedService.CreatePostAsync(post);
@@ -52,7 +54,7 @@ namespace perenne.Controllers
             var answer = new PostFto
             {
                 Title = createdPost.Title,
-                Content = createdPost.Content,
+                Content = createdPost.Content!,
                 Creator = createdPost.UserId,
                 ImageUrl = createdPost.ImageUrl,
                 CreatedAt = createdPost.CreatedAt
@@ -63,10 +65,21 @@ namespace perenne.Controllers
 
         // [host]/api/deletepost/{postIdString}
         [HttpDelete("{groupIdString}/deletepost/{postIdString}")]
-        public async Task<IActionResult> DeletePost(string postIdString)
+        public async Task<IActionResult> DeletePost(string groupIdString, string postIdString)
         {
+            var user = await GetCurrentUser();
+            var groupId = groupService.ParseGroupId(groupIdString);
+            var membership = await groupService.GetGroupMemberAsync(user.Id, groupId);
+
+            if (user.SystemRole != SystemRole.Admin &&
+                user.SystemRole != SystemRole.SuperAdmin &&
+                membership.Role != GroupRole.Coordinator &&
+                membership.Role != GroupRole.Contributor)
+                return Unauthorized(new { message = "O membro não tem permissão para apagar postagens." });
+
+
             if (!Guid.TryParse(postIdString, out var postId))
-                return BadRequest(new { result = false, message = "Invalid Post ID format." });
+                return BadRequest(new { result = false, message = "Formato inválido." });
 
             var result = await feedService.DeletePostAsync(postId);
             return Ok(result);   
@@ -76,8 +89,8 @@ namespace perenne.Controllers
         [HttpGet("{groupIdString}/getposts/{num}")]
         public async Task<ActionResult<IEnumerable<PostFto>>> GetLastXPosts(string groupIdString, int num)
         {
-            if (!Guid.TryParse(groupIdString, out var groupId)) return BadRequest(new { message = "Invalid Feed ID format." });
-            if (num <= 0) return BadRequest(new { message = "Number of posts to retrieve must be positive." });
+            if (!Guid.TryParse(groupIdString, out var groupId)) return BadRequest(new { message = "Feed ID inválido." });
+            if (num <= 0) return BadRequest(new { message = "Número de posts deve ser positivo." });
 
             var group = await groupService.GetGroupByIdAsync(groupId);
             var feedId = group.Feed!.Id;
@@ -88,7 +101,7 @@ namespace perenne.Controllers
             {
                 Id = x.Id,
                 Title = x.Title,
-                Content = x.Content,
+                Content = x.Content!,
                 ImageUrl = x.ImageUrl,
                 Creator = (Guid)x.CreatedById!,
                 CreatedAt = x.CreatedAt
@@ -96,5 +109,21 @@ namespace perenne.Controllers
 
             return Ok(answer);
         }
+
+        // Utils
+
+        private Guid? GetCurrentUserId()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            return userService.ParseUserId(userIdString);
+        }
+
+        private async Task<User> GetCurrentUser()
+        {
+            var userId = GetCurrentUserId() ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+            var user = await userService.GetUserByIdAsync(userId);
+            return user ?? throw new Exception($"Usuário com ID {userId} não encontrado.");
+        }
+
     }
 }

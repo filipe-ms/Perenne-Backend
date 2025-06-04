@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography.X509Certificates;
-
-namespace perenne.FTOs
+﻿namespace perenne.FTOs
 {
 
     public record ChatMessageFTO(
