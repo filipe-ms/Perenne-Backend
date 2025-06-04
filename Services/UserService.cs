@@ -1,6 +1,7 @@
 ﻿using perenne.Interfaces;
 using perenne.Models;
 using perenne.Repositories;
+using System.Security.Claims;
 
 namespace perenne.Services;
 
@@ -32,5 +33,4 @@ public class UserService(IUserRepository userRepository) : IUserService
 
         return guid;
     }
-
 }

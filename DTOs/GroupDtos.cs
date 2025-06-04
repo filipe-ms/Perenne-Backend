@@ -2,12 +2,6 @@
 
 namespace perenne.DTOs
 {
-    public record AddGroupMemberDto
-    {
-        public Guid UserId { get; init; }
-        public Guid GroupId { get; init; }
-    }
-
     public record GroupDeleteDto
     {
         [Required(ErrorMessage = "O ID do grupo é obrigatório.")]
@@ -29,4 +23,11 @@ namespace perenne.DTOs
         public string Description { get; init; } = string.Empty;
         public int MemberCount { get; init; }
     }
+
+    public record GroupUpdateDto(
+        [Required(ErrorMessage = "O ID do grupo é obrigatório.")]
+        string GroupIdString,
+        string? NewNameString,
+        string? NewDescriptionString
+        );
 }

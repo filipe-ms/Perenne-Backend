@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
 using perenne.Interfaces;
 using perenne.Models;
+using perenne.Utils;
 using System.Security.Claims;
-using perenne.Extensions;
 
 namespace perenne.Controllers
 {
@@ -13,49 +13,141 @@ namespace perenne.Controllers
     [Route("api/[controller]")]
     public class SystemAdminController(IGroupService groupService, IUserService userService) : ControllerBase
     {
-        // [host]/api/sysadmin/creategroup/
+        // [host]/api/systemadmin/creategroup
         [HttpPost(nameof(CreateGroup))]
         public async Task<ActionResult<GroupCreateDto>> CreateGroup([FromBody] GroupCreateDto dto)
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userIdGuid))
-                return Unauthorized("User ID could not be determined or is invalid.");
+            var user = await GetCurrentUser();
+            if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem criar grupos.");
 
-            var ready = await groupService.CreateGroupAsync(dto);
-            return Ok(ready);
+            var createdGroup = await groupService.CreateGroupAsync(dto);
+
+            return Ok(createdGroup);
         }
 
-        //[host]/api/sysadmin/groups/delete/
-        [HttpDelete("group/delete")]
-        public async Task<bool> DeleteGroup([FromBody] GroupDeleteDto dto)
+        // [host]/api/systemadmin/deletegroup
+        [HttpDelete(nameof(DeleteGroup))]
+        public async Task<ActionResult<bool>> DeleteGroup([FromBody] GroupDeleteDto dto)
         {
+            var user = await GetCurrentUser();
+            if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem remover grupos.");
+
             var groupId = groupService.ParseGroupId(dto.GroupId);
-            return await groupService.DeleteGroupAsync(groupId);
+
+            return Ok(await groupService.DeleteGroupAsync(groupId));
         }
 
-        // [host]/api/sysadmin/groupmember/role/update
-        [HttpPatch("groupmember/role/update")]
-        public async Task<ActionResult<bool>> UpdateGroupMemberRole([FromBody] MemberRoleDTO member)
+        // [host]/api/systemadmin/updategroup
+        [HttpPut(nameof(UpdateGroup))]
+        public async Task<ActionResult<GroupUpdateDto>> UpdateGroup([FromBody] GroupUpdateDto dto)
         {
-            if(member == null || string.IsNullOrEmpty(member.GroupIdString) || string.IsNullOrEmpty(member.UserIdString) || string.IsNullOrEmpty(member.NewRoleString))
-                return BadRequest("Invalid member role update request.");
-            if (!Guid.TryParse(member.GroupIdString, out var groupId) || !Guid.TryParse(member.UserIdString, out var userId))
-                return BadRequest("Invalid GUID format for UserId or GroupId.");
+            var requester = await GetCurrentUser();
+            var groupId = groupService.ParseGroupId(dto.GroupIdString);
+            if (!IsSystemAdmin(requester.SystemRole) && !await IsCurrentUserCoordinator(groupId)) return Forbid("Apenas administradores do sistema ou coordenadores do grupo podem atualizar grupos.");
 
-            var newRole = EnumExtensions.FromDisplayName<GroupRole>(member.NewRoleString.ToLower());
+            var group = await groupService.GetGroupByIdAsync(groupId);
 
-            var response = await groupService.UpdateGroupMemberRoleAsync(userId, groupId, newRole);
-            return response;
+            string newName = "";
+
+            if (string.IsNullOrEmpty(dto.NewNameString)) newName = group.Name;
+            if (dto.NewNameString!.Length != 0 && dto.NewNameString.Length < 4) return BadRequest("O nome do grupo deve ter ao menos 4 caracteres.");
+            if (dto.NewNameString!.Length > 500) return BadRequest("O nome fornecido é muito grande. Reduza-o e tente novamente.");
+
+            if (string.IsNullOrEmpty(newName)) newName = dto.NewNameString;
+
+            group.Name = newName;
+            group.Description = dto.NewDescriptionString;
+
+            var result = await groupService.UpdateGroupAsync(group);
+            return Ok(result);
         }
 
-        // [host]/api/sysadmin/user/role/update
-        [HttpPatch("user/role/update")]
-        public async Task<ActionResult<bool>> UpdateUserRoleInSystemAsync(SystemRoleDTO userRole)
+        // [host]/api/systemadmin/updateusersystemrole
+        [HttpPatch(nameof(UpdateUserSystemRole))]
+        public async Task<ActionResult<bool>> UpdateUserSystemRole([FromBody] SystemRoleDTO userRoleDto)
         {
-            var userId = userService.ParseUserId(userRole.UserIdString);
-            var newRole = EnumExtensions.FromDisplayName<SystemRole>(userRole.NewRoleString.ToLower());
-            var response = await userService.UpdateUserRoleInSystemAsync(userId, newRole);
-            return response;
+            var requester = await GetCurrentUser();
+
+            if (!IsSystemAdmin(requester.SystemRole)) return Forbid("Apenas administradores podem alterar cargos no sistema.");
+
+            var targetId = userService.ParseUserId(userRoleDto.UserIdString);
+            var targetUser = await userService.GetUserByIdAsync(targetId);
+
+            SystemRole newRole = RoleUtils.NameToEnum<SystemRole>(userRoleDto.NewRoleString);
+
+            if (!SystemRoleChangeValidation(requester.SystemRole, targetUser.SystemRole, newRole))
+            {
+                return BadRequest("Você não tem permissão para alterar o cargo do usuário especificado. Verifique os cargos envolvidos.");
+            }
+
+            if (newRole == SystemRole.None) return BadRequest("Cargo (Role) de sistema fornecido é inválido.");
+
+            var result = await userService.UpdateUserRoleInSystemAsync(targetId, newRole);
+            return Ok(result);
+        }
+
+        // [host]/api/systemadmin/updategroupmemberrole
+        [HttpPatch(nameof(UpdateGroupMemberRole))]
+        public async Task<ActionResult<bool>> UpdateGroupMemberRole([FromBody] MemberRoleDTO memberDto)
+        {
+            var requester = await GetCurrentUser();
+            var groupId = groupService.ParseGroupId(memberDto.GroupIdString);
+
+            // Só passa se for System Admin ou Coordenador de grupo
+            if (!IsSystemAdmin(requester.SystemRole) && !await IsCurrentUserCoordinator(groupId)) return Forbid("Apenas administradores do sistema ou coordenadores do grupo podem atualizar cargos de membros de grupos.");
+
+            GroupRole newRole = RoleUtils.NameToEnum<GroupRole>(memberDto.NewRoleString);
+            if(newRole == GroupRole.None) return BadRequest("Cargo (Role) fornecido é inválido.");
+
+            var targetId = userService.ParseUserId(memberDto.UserIdString);
+            
+            if (targetId == requester.Id) return BadRequest("Um usuário não pode alterar seu próprio cargo.");
+
+            var result = await groupService.UpdateGroupMemberRoleAsync(targetId, groupId, newRole);
+
+            return Ok(result);
+        }
+
+
+        // Utils
+        private Guid GetCurrentUserId()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(userIdString)) throw new ArgumentNullException(nameof(userIdString), "[SystemAdminController] O parâmetro 'userIdString' está nulo ou vazio. Um identificador de usuário é obrigatório.");
+            return userService.ParseUserId(userIdString);
+        }
+        private async Task<User> GetCurrentUser()
+        {
+            var userId = GetCurrentUserId();
+            return await userService.GetUserByIdAsync(userId);
+        }
+        private async Task<bool> IsCurrentUserCoordinator(Guid groupId)
+        {
+            var userId = GetCurrentUserId();
+            var membership = await groupService.GetGroupMemberAsync(userId, groupId);
+            return membership.Role == GroupRole.Coordinator;
+        }
+        private static bool IsSystemAdmin(SystemRole role)
+        {
+            return role == SystemRole.SuperAdmin || role == SystemRole.Admin;
+        }
+        private static bool SystemRoleChangeValidation(SystemRole requesterRole, SystemRole targetRole, SystemRole newTargetRole)
+        {
+            switch (requesterRole)
+            {
+                // Cargo de confiança.
+                // Pode modificar qualquer cargo, inclusive criar outros SuperAdmins.
+                case SystemRole.SuperAdmin:
+                    return true;
+
+                // Admins podem modificar qualquer cargo abaixo de Admins.
+                case SystemRole.Admin:
+                    if (targetRole != SystemRole.SuperAdmin && targetRole != SystemRole.Admin) return true;
+                    else return false;
+
+                default:
+                    return false;
+            }
         }
     }
 }

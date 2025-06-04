@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 
 namespace perenne.Models
 {
     public enum GroupRole
     {
+        None,
+
         [Display(Name = "Coordenador")]
         Coordinator,
 
@@ -17,6 +18,8 @@ namespace perenne.Models
 
     public enum SystemRole
     {
+        None,
+
         [Display(Name = "Diretor")]
         SuperAdmin,
 

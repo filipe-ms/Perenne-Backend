@@ -48,14 +48,12 @@ public class UserController(IUserService userService) : ControllerBase
     [HttpGet(nameof(GetUserInfo))]
     public async Task<ActionResult<ProfileInfoFTO>> GetUserInfo()
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var userId = GetCurrentUserId();
 
         try
         {
-            Guid userIdGuid = userService.ParseUserId(userIdString);
-
-            var user = await userService.GetUserByIdAsync(userIdGuid);
-            var groups = await userService.GetGroupsByUserIdAsync(userIdGuid);
+            var user = await userService.GetUserByIdAsync(userId!.Value);
+            var groups = await userService.GetGroupsByUserIdAsync(userId!.Value);
             var groupNames = groups.Select(g => g.Name).ToList() ?? [];
 
             var userProfileInfo = new ProfileInfoFTO(user)
@@ -66,11 +64,7 @@ public class UserController(IUserService userService) : ControllerBase
             return Ok(userProfileInfo);
         }
 
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[{nameof(GetUserInfo)}] Um erro ocorreu ao buscar as informações do usuário.\n\t->{ex}");
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocorreu um erro ao processar sua solicitação." });
-        }
+        catch { throw; }
     }
 
     // [host]/api/user/profile/{userIdString}
@@ -81,6 +75,16 @@ public class UserController(IUserService userService) : ControllerBase
         if (user == null) return NotFound(new { message = $"Usuário com ID {userIdString} não encontrado." });
         var userFTO = new ProfileInfoFTO(user);
         return Ok(userFTO);
+    }
+
+
+
+    // Utils
+
+    private Guid? GetCurrentUserId()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return userService.ParseUserId(userIdString);
     }
 }
 

@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
-namespace perenne.Extensions
+namespace perenne.Utils
 {
-    public static class EnumExtensions
+    public static class RoleUtils
     {
-        public static string ToDisplayName(this Enum value)
+        public static string EnumToName(this Enum value)
         {
             if (value == null) return string.Empty;
 
@@ -17,30 +17,32 @@ namespace perenne.Extensions
             return displayAttr?.Name ?? value.ToString();
         }
 
-        public static TEnum FromDisplayName<TEnum>(string displayName) where TEnum : struct, Enum
+        public static TEnum NameToEnum<TEnum>(string displayName) where TEnum : struct, Enum
         {
             if (string.IsNullOrWhiteSpace(displayName))
-                throw new ArgumentException("Novo cargo não pode ser vazio.", nameof(displayName));
+            {
+                throw new ArgumentException("O nome para conversão não pode ser vazio.", nameof(displayName));
+            }
 
             var normalizedInput = displayName.Trim().ToLowerInvariant();
 
             foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
+                // Verifica o DisplayAttribute
                 var displayAttr = field.GetCustomAttribute<DisplayAttribute>();
-                var displayNameNormalized = displayAttr?.Name?.Trim().ToLowerInvariant();
-
-                if (displayNameNormalized == normalizedInput)
+                if (displayAttr?.Name?.Trim().ToLowerInvariant() == normalizedInput)
+                {
                     return (TEnum)field.GetValue(null);
+                }
 
+                // Verifica o nome do próprio membro do enum
                 if (field.Name.ToLowerInvariant() == normalizedInput)
+                {
                     return (TEnum)field.GetValue(null);
+                }
             }
 
-            throw new ArgumentException(
-                $"Valor '{displayName}' não corresponde a nenhum DisplayName ou nome de enum em {typeof(TEnum).Name}.",
-                nameof(displayName)
-            );
+            return default(TEnum);
         }
-
     }
 }

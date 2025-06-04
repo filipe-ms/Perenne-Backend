@@ -191,7 +191,6 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// HTTP Request Pipeline
 app.UseForwardedHeaders();
 
 // Migrações
@@ -224,14 +223,14 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-} else // Produção
+} else
 {
     app.UseCors("ProductionPolicy");
-    app.UseExceptionHandler("/Error"); // Endpoint para erros genéricos
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-app.UseHttpsRedirection(); // Adicionado para segurança, se o Render não fizer isso por padrão
+app.UseHttpsRedirection();
 
 app.UseRouting();
 
