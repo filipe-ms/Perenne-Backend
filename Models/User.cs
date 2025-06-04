@@ -42,9 +42,12 @@ namespace perenne.Models
         [MaxLength(3000)]
         public string? Bio { get; set; }
 
+        public bool IsAccountActive { get; set; } = true;
+
         // Navigation property
-        public virtual List<GroupMember> Groups { get; set; } = new();
-        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser1 { get; set; } = new List<ChatChannel>();
-        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser2 { get; set; } = new List<ChatChannel>();
+        public virtual List<GroupMember> Groups { get; set; } = [];
+        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser1 { get; set; } = [];
+        public virtual ICollection<ChatChannel> PrivateChatChannelsAsUser2 { get; set; } = [];
+        public virtual ICollection<GroupJoinRequest> GroupJoinRequests { get; set; } = [];
     }
 }

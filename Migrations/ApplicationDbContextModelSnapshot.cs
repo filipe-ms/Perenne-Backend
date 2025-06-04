@@ -168,6 +168,9 @@ namespace perenne.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -191,6 +194,48 @@ namespace perenne.Migrations
                     b.ToTable("Groups");
                 });
 
+            modelBuilder.Entity("perenne.Models.GroupJoinRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("HandledByUserId");
+
+                    b.HasIndex("UserId", "GroupId", "Status")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Pending'");
+
+                    b.ToTable("GroupJoinRequests");
+                });
+
             modelBuilder.Entity("perenne.Models.GroupMember", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -205,8 +250,11 @@ namespace perenne.Migrations
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsMuted")
-                        .HasColumnType("boolean");
+                    b.Property<Guid>("MutedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("MutedUntil")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -304,6 +352,9 @@ namespace perenne.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsAccountActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsBanned")
                         .HasColumnType("boolean");
@@ -451,6 +502,32 @@ namespace perenne.Migrations
                     b.Navigation("UpdatedBy");
                 });
 
+            modelBuilder.Entity("perenne.Models.GroupJoinRequest", b =>
+                {
+                    b.HasOne("perenne.Models.Group", "Group")
+                        .WithMany("JoinRequests")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("perenne.Models.User", "HandledByUser")
+                        .WithMany()
+                        .HasForeignKey("HandledByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("perenne.Models.User", "User")
+                        .WithMany("GroupJoinRequests")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("HandledByUser");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("perenne.Models.GroupMember", b =>
                 {
                     b.HasOne("perenne.Models.Group", "Group")
@@ -534,11 +611,15 @@ namespace perenne.Migrations
 
                     b.Navigation("Feed");
 
+                    b.Navigation("JoinRequests");
+
                     b.Navigation("Members");
                 });
 
             modelBuilder.Entity("perenne.Models.User", b =>
                 {
+                    b.Navigation("GroupJoinRequests");
+
                     b.Navigation("Groups");
 
                     b.Navigation("PrivateChatChannelsAsUser1");

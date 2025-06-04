@@ -17,7 +17,8 @@ namespace perenne.Repositories
             {
                 Id = g.Id,
                 Name = g.Name,
-                Description = g.Description
+                Description = g.Description,
+                IsPrivate = g.IsPrivate,
             });
 
             return result;
@@ -109,6 +110,17 @@ namespace perenne.Repositories
             }
             return true;
         }
+        public async Task<GroupMember> UpdateGroupMemberAsync(GroupMember member)
+        {
+            var existing = await context.GroupMembers
+                .Include(gm => gm.User)
+                .Include(gm => gm.Group)
+                .FirstOrDefaultAsync(gm => gm.UserId == member.UserId) ?? throw new KeyNotFoundException($"Membro ou Grupo com o ID fornecido não encontrado.");
+
+            existing = member;
+            await context.SaveChangesAsync();
+            return existing;
+        }
         public async Task<bool> UpdateGroupMemberRoleAsync(Guid groupId, Guid userId, GroupRole newRole)
         {
             var group = await context.Groups
@@ -133,6 +145,71 @@ namespace perenne.Repositories
                 .Include(gm => gm.Group)
                 .FirstOrDefaultAsync(gm => gm.UserId == userId && gm.GroupId == groupId);
             return member ?? throw new KeyNotFoundException($"Member with User ID {userId} not found in Group ID {groupId}.");
+        }
+
+        // Group Join Request Operations (New)
+        public async Task<GroupJoinRequest> CreateJoinRequestAsync(GroupJoinRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            // Detach related entities if they are already tracked to avoid issues with AddAsync
+            if (request.User != null) context.Entry(request.User).State = EntityState.Unchanged;
+            if (request.Group != null) context.Entry(request.Group).State = EntityState.Unchanged;
+
+            await context.GroupJoinRequests.AddAsync(request);
+            await context.SaveChangesAsync();
+            return request;
+        }
+
+        public async Task<GroupJoinRequest?> GetJoinRequestByIdAsync(Guid requestId)
+        {
+            return await context.GroupJoinRequests
+                .Include(r => r.User)
+                .Include(r => r.Group)
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+        }
+
+        public async Task<GroupJoinRequest?> GetPendingJoinRequestAsync(Guid userId, Guid groupId)
+        {
+            return await context.GroupJoinRequests
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.GroupId == groupId && r.Status == RequestStatus.Pending);
+        }
+
+        public async Task<IEnumerable<GroupJoinRequest>> GetPendingJoinRequestsForGroupAsync(Guid groupId)
+        {
+            return await context.GroupJoinRequests
+                .Where(r => r.GroupId == groupId && r.Status == RequestStatus.Pending)
+                .Include(r => r.User) // Include user details for the admin to see
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<GroupJoinRequest>> GetJoinRequestsForUserAsync(Guid userId)
+        {
+            return await context.GroupJoinRequests
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Group) // Include group details
+                .OrderByDescending(r => r.RequestedAt)
+                .ToListAsync();
+        }
+
+        public async Task<GroupJoinRequest> UpdateJoinRequestAsync(GroupJoinRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            context.GroupJoinRequests.Update(request);
+            await context.SaveChangesAsync();
+            return request;
+        }
+
+        public async Task<bool> DeleteJoinRequestAsync(Guid requestId)
+        {
+            var request = await context.GroupJoinRequests.FindAsync(requestId);
+            if (request != null)
+            {
+                context.GroupJoinRequests.Remove(request);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
         }
     }
 }

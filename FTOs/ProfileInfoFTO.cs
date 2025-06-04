@@ -1,5 +1,5 @@
 ﻿using perenne.Models;
-using perenne.Extensions;
+using perenne.Utils;
 
 namespace perenne.FTOs
 {
@@ -19,7 +19,7 @@ namespace perenne.FTOs
             Email = user.Email;
             FirstName = user.FirstName;
             LastName = user.LastName;
-            Role = user.SystemRole.ToDisplayName();
+            Role = user.SystemRole.EnumToName();
             ProfilePictureUrl = string.IsNullOrEmpty(user.ProfilePictureUrl) ? "" : user.ProfilePictureUrl;
             CreatedAt = user.CreatedAt;
             IsBanned = user.IsBanned;

@@ -16,6 +16,7 @@ namespace perenne.Data
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<Feed> Feed { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,6 +66,36 @@ namespace perenne.Data
                 .WithMany(g => g.Members)
                 .HasForeignKey(gm => gm.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // GroupJoinRequest configuration
+            modelBuilder.Entity<GroupJoinRequest>(entity =>
+            {
+                entity.HasKey(gjr => gjr.Id);
+
+                entity.HasOne(gjr => gjr.User)
+                    .WithMany(u => u.GroupJoinRequests)
+                    .HasForeignKey(gjr => gjr.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(gjr => gjr.Group)
+                    .WithMany(g => g.JoinRequests)
+                    .HasForeignKey(gjr => gjr.GroupId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(gjr => gjr.HandledByUser)
+                    .WithMany()
+                    .HasForeignKey(gjr => gjr.HandledByUserId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(gjr => gjr.Status)
+                    .HasConversion<string>();
+
+                // Prevent duplicate pending requests from the same user for the same group
+                entity.HasIndex(gjr => new { gjr.UserId, gjr.GroupId, gjr.Status })
+                      .HasFilter("\"Status\" = 'Pending'")
+                      .IsUnique();
+            });
 
             // Enum conversion
             modelBuilder.Entity<GroupMember>()
@@ -160,5 +191,6 @@ namespace perenne.Data
     }
 }
 
+// Mexeu aqui, faz migração
 // dotnet ef migrations add [nome da migração]
 // dotnet ef database update

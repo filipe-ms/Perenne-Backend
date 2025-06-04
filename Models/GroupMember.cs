@@ -11,7 +11,9 @@ namespace perenne.Models
     {
         public GroupRole Role { get; set; } = GroupRole.Member;
         public bool IsBlocked { get; set; } = false;
-        public bool IsMuted { get; set; } = false;
+        public DateTime? MutedUntil { get; set; } = null;
+        public Guid MutedBy { get; set; } = Guid.Empty;
+
 
         // Join Date
         public DateTime CreatedAt { get; init; } = DateTime.UtcNow;

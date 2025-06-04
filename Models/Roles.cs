@@ -2,20 +2,6 @@
 
 namespace perenne.Models
 {
-    public enum GroupRole
-    {
-        None,
-
-        [Display(Name = "Coordenador")]
-        Coordinator,
-
-        [Display(Name = "Contribuidor")]
-        Contributor,
-
-        [Display(Name = "Membro")]
-        Member
-    }
-
     public enum SystemRole
     {
         None,
@@ -31,5 +17,19 @@ namespace perenne.Models
 
         [Display(Name = "Usuário")]
         User
+    }
+
+    public enum GroupRole
+    {
+        None,
+
+        [Display(Name = "Coordenador")]
+        Coordinator,
+
+        [Display(Name = "Contribuidor")]
+        Contributor,
+
+        [Display(Name = "Membro")]
+        Member
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
@@ -31,34 +32,50 @@ namespace perenne.Controllers
 
         // [host]/api/{groupIdString}/join
         [HttpPost("{groupIdString}/join")]
-        public async Task<ActionResult<GroupJoinedFTO>> JoinGroup(string groupIdString)
+        public async Task<ActionResult> JoinGroup(string groupIdString, [FromBody] JoinGroupRequestDto? dto) // Optional DTO for message
         {
             if (!Guid.TryParse(groupIdString, out var groupId))
-                return BadRequest("Invalid GUID");
+                return BadRequest("Invalid Group GUID");
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            Guid userId = userService.ParseUserId(userIdString);
+            var userId = GetCurrentUserId();
+            var group = await groupService.GetGroupByIdAsync(groupId);
+            if (group == null) return NotFound("Group not found.");
 
-            GroupMember newMember = new()
+            if (group.IsPrivate)
             {
-                UserId = userId,
-                GroupId = groupId,
-                User = await userService.GetUserByIdAsync(userId),
-                Group = await groupService.GetGroupByIdAsync(groupId)
-            };
+                var request = await groupService.RequestToJoinGroupAsync(userId, groupId, dto?.Message);
+                return Ok(new { Message = "Solicitação para entrar no grupo enviada. Aguardando aprovação.", RequestId = request.Id });
+            }
+            else
+            {
+                var user = await userService.GetUserByIdAsync(userId);
+                if (user == null) return NotFound("User not found.");
 
-            var member = await groupService.AddGroupMemberAsync(newMember);
+                GroupMember newMember = new()
+                {
+                    UserId = userId,
+                    User = user,
+                    GroupId = groupId,
+                    Group = group,
+                    Role = GroupRole.Member,
+                };
 
-            if (member == null) return NotFound("Group not found or user already a member.");
-
-            var response = new GroupJoinedFTO(member);
-
-            return Ok(response);
+                var member = await groupService.AddGroupMemberAsync(newMember);
+                var response = new GroupJoinedFTO(member);
+                return Ok(response);
+            }
         }
 
         // [host]/api/group/getall
         [HttpGet(nameof(GetAll))]
         public async Task<IEnumerable<GroupListFto>> GetAll() =>
             await groupService.GetAllAsync();
+
+        // Utils
+        private Guid GetCurrentUserId()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            return userService.ParseUserId(userIdString);
+        }
     }
 }

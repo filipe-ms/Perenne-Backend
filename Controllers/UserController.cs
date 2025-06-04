@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
+using perenne.Services;
 using System.Security.Claims;
 
 namespace perenne.Controllers;
@@ -10,7 +11,7 @@ namespace perenne.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class UserController(IUserService userService) : ControllerBase
+public class UserController(IUserService userService, IGroupService groupService) : ControllerBase
 {
     // [host]/api/user/getgroups/
     [HttpGet(nameof(GetGroups))]
@@ -67,6 +68,27 @@ public class UserController(IUserService userService) : ControllerBase
         catch { throw; }
     }
 
+    // GET [host]/api/user/getgroupjoinrequests
+    [HttpGet(nameof(GetGroupJoinRequests))]
+    public async Task<ActionResult<IEnumerable<object>>> GetGroupJoinRequests()
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized(new { message = "Usuário não autenticado." });
+        
+        var requests = await groupService.GetPendingRequestsForUserAsync(userId!.Value);
+
+        var response = requests.Select(r => new
+        {
+            RequestId = r.Id,
+            r.GroupId,
+            GroupName = r.Group?.Name,
+            r.RequestedAt,
+            Status = r.Status.ToString(),
+            r.Message
+        });
+        return Ok(response);
+    }
+
     // [host]/api/user/profile/{userIdString}
     [HttpGet("profile/{userIdString}")]
     public async Task<ActionResult<ProfileInfoFTO>> GetUserInfoById(string userIdString)
@@ -77,10 +99,7 @@ public class UserController(IUserService userService) : ControllerBase
         return Ok(userFTO);
     }
 
-
-
     // Utils
-
     private Guid? GetCurrentUserId()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

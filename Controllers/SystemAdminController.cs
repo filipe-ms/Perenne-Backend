@@ -32,7 +32,7 @@ namespace perenne.Controllers
             var user = await GetCurrentUser();
             if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem remover grupos.");
 
-            var groupId = groupService.ParseGroupId(dto.GroupId);
+            var groupId = groupService.ParseGroupId(dto.GroupIdString);
 
             return Ok(await groupService.DeleteGroupAsync(groupId));
         }
@@ -108,6 +108,115 @@ namespace perenne.Controllers
             return Ok(result);
         }
 
+        // [host]/api/systemadmin/approvegroupjoinrequest
+        [HttpPost(nameof(ApproveGroupJoinRequest))]
+        public async Task<ActionResult> ApproveGroupJoinRequest([FromBody] string requestIdString)
+        {
+            if (!Guid.TryParse(requestIdString, out var requestId))
+                return BadRequest("Invalid Request GUID");
+
+            var joinRequest = await groupService.GetJoinRequestByIdAsync(requestId);
+
+            if (joinRequest == null) return NotFound("Join request not found.");
+
+            var user = await GetCurrentUser();
+            if (!IsSystemAdmin(user.SystemRole) && !await IsCurrentUserCoordinator(joinRequest.GroupId))
+                return Forbid("Apenas administradores do sistema ou coordenadores do grupo podem aprovar solicitações de adesão.");
+
+            var newMember = await groupService.ApproveJoinRequestAsync(requestId, user.Id);
+            
+            if (newMember == null) return StatusCode(500, "Failed to approve request and add member.");
+            
+            return Ok(new { Message = "Solicitação aprovada. Usuário adicionado ao grupo.", MemberId = newMember.UserId, newMember.GroupId });
+        }
+
+        // [host]/api/systemadmin/rejectgroupjoinrequest
+        [HttpPost(nameof(RejectJoinRequest))]
+        public async Task<ActionResult> RejectJoinRequest([FromBody] string requestIdString)
+        {
+            if (!Guid.TryParse(requestIdString, out var requestId))
+                return BadRequest("Invalid Request GUID");
+
+            var joinRequest = await groupService.GetJoinRequestByIdAsync(requestId);
+            if (joinRequest == null) return NotFound("Join request not found.");
+
+            var user = await GetCurrentUser();
+            if (!IsSystemAdmin(user.SystemRole) && !await IsCurrentUserCoordinator(joinRequest.GroupId))
+                return Forbid("Apenas administradores do sistema ou coordenadores do grupo podem rejeitar solicitações de adesão.");
+
+            await groupService.RejectJoinRequestAsync(requestId, user.Id);
+            return Ok(new { Message = "Solicitação rejeitada." });
+        }
+
+        // [host]/api/systemadmin/{groupIdString}/getpendingmembers
+        [HttpGet("{groupIdString}/getpendingmembers")]
+        public async Task<ActionResult<IEnumerable<object>>> GetPendingMembersForGroup(string groupIdString)
+        {
+            var user = await GetCurrentUser();
+            var groupId = groupService.ParseGroupId(groupIdString);
+            if (!IsSystemAdmin(user.SystemRole) && !await IsCurrentUserCoordinator(groupId))
+                return Forbid("Apenas administradores do sistema ou coordenadores do grupo podem ver membros pendentes de grupos.");
+
+            var requests = await groupService.GetPendingRequestsForGroupAsync(groupId, user.Id);
+
+            var response = requests.Select(r => new
+            {
+                RequestId = r.Id,
+                r.UserId,
+                UserName = $"{r.User?.FirstName} {r.User?.LastName}",
+                UserEmail = r.User?.Email,
+                r.RequestedAt,
+                r.Message
+            });
+
+            return Ok(response);
+        }
+
+        // [host]/api/systemadmin/muteuseringroupchat
+        [HttpPatch(nameof(MuteUserInGroupChat))]
+        public async Task<ActionResult> MuteUserInGroupChat([FromBody] MuteChatMemberDTO dto)
+        {   
+            var groupId = groupService.ParseGroupId(dto.GroupIdString);
+            var group = await groupService.GetGroupByIdAsync(groupId);
+            
+            var target = userService.ParseUserId(dto.MemberIdString);
+            
+            if (!await HasAuthorityInGroup(group.Id) || !await CanBeMuted(target, group.Id))
+                return Forbid("Apenas administradores do sistema, moderadores ou coordenadores do grupo podem silenciar usuários em grupos.");
+
+            if (dto.Minutes < 1) return BadRequest("O período de mute deve ser maior do que um minuto.");
+
+            var groupMemberToMute = await groupService.GetGroupMemberAsync(target, groupId);
+
+            groupMemberToMute.MutedUntil = DateTime.UtcNow.AddMinutes(dto.Minutes);
+            groupMemberToMute.MutedBy = GetCurrentUserId();
+
+            var result = await groupService.MuteUserInGroupAsync(groupMemberToMute);
+            return Ok(result);
+        }
+
+        // [host]/api/systemadmin/muteuseringroupchat
+        [HttpPatch(nameof(MuteUserInGroupChat))]
+        public async Task<ActionResult> UnmuteUserInGroupChat([FromBody] UnmuteChatMemberDTO dto)
+        {
+            var groupId = groupService.ParseGroupId(dto.GroupIdString);
+            var group = await groupService.GetGroupByIdAsync(groupId);
+
+            var target = userService.ParseUserId(dto.MemberIdString);
+
+            if (!await HasAuthorityInGroup(group.Id) || !await CanBeMuted(target, group.Id))
+                return Forbid("Apenas administradores do sistema, moderadores ou coordenadores do grupo podem remover mute de usuários em grupos.");
+
+            var groupMemberToMute = await groupService.GetGroupMemberAsync(target, groupId);
+
+            groupMemberToMute.MutedUntil = null;
+            groupMemberToMute.MutedBy = Guid.Empty;
+
+            var result = await groupService.UnmuteUserInGroupAsync(groupMemberToMute);
+            return Ok(result);
+        }
+
+
 
         // Utils
         private Guid GetCurrentUserId()
@@ -148,6 +257,35 @@ namespace perenne.Controllers
                 default:
                     return false;
             }
+        }
+
+        private async Task<bool> HasAuthorityInGroup(Guid groupId)
+        {
+            var user = await GetCurrentUser();
+            if (user.SystemRole == SystemRole.SuperAdmin ||
+                user.SystemRole == SystemRole.Admin ||
+                user.SystemRole == SystemRole.Moderator)
+                return true;
+
+            var groupMember = await groupService.GetGroupMemberAsync(user.Id, groupId);
+            if (groupMember.Role == GroupRole.Coordinator)
+                return true;
+
+            return false;
+        }
+
+        private async Task<bool> CanBeMuted(Guid targetId, Guid groupId)
+        {
+            var target = await userService.GetUserByIdAsync(targetId);
+            if (target.SystemRole == SystemRole.SuperAdmin ||
+                target.SystemRole == SystemRole.Admin)
+                return false;
+
+            var groupMember = await groupService.GetGroupMemberAsync(targetId, groupId);
+            if (groupMember.Role == GroupRole.Coordinator)
+                return false;
+
+            return true;
         }
     }
 }

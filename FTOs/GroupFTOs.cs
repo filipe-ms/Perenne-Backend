@@ -9,7 +9,8 @@ namespace perenne.FTOs
         public string? LastName { get; set; }
         public GroupRole Role { get; set; }
         public bool IsBlocked { get; set; }
-        public bool IsMuted { get; set; }
+        public Guid MutedBy { get; set; }
+        public DateTime? MutedUntil { get; set; }
 
         public MemberFto(GroupMember member)
         {
@@ -18,7 +19,8 @@ namespace perenne.FTOs
             LastName = member.User.LastName;
             Role = member.Role;
             IsBlocked = member.IsBlocked;
-            IsMuted = member.IsMuted;
+            MutedUntil = member.MutedUntil;
+            MutedBy = member.MutedBy;
         }
     }
 
