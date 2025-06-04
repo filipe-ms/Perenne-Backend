@@ -84,7 +84,7 @@ else
     }
 }
 
-Console.WriteLine($"DEBUG_FINAL_CONNECTION_STRING_TO_USE: '{npgsqlConn}'");
+//Console.WriteLine($"DEBUG_FINAL_CONNECTION_STRING_TO_USE: '{npgsqlConn}'");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(npgsqlConn));
@@ -143,16 +143,16 @@ builder.Services.AddCors(options =>
     });
     options.AddPolicy("ProductionPolicy", policy =>
     {
-        //var frontendUrl = builder.Configuration["FrontendUrl"];
-        //if (string.IsNullOrEmpty(frontendUrl))
-        //{
-        //    Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
-        //} else {
-            policy//.WithOrigins(frontendUrl.Split(','))
+        var frontendUrl = builder.Configuration["FrontendUrl"];
+        if (string.IsNullOrEmpty(frontendUrl))
+        {
+            Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
+        } else {
+            policy.WithOrigins(frontendUrl.Split(','))
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        //}
+        }
     });
 });
 
@@ -221,16 +221,16 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-//if (app.Environment.IsDevelopment())
-//{
+if (app.Environment.IsDevelopment())
+{
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-//} else
-//{
- //   app.UseCors("ProductionPolicy");
- //   app.UseExceptionHandler("/Error");
- //   app.UseHsts();
-//}
+} else
+{
+    app.UseCors("ProductionPolicy");
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
 
