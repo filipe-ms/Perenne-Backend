@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using perenne.Interfaces;
 using perenne.Models;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using perenne.DTOs;
 
 namespace perenne.Controllers
 {
@@ -154,12 +154,5 @@ namespace perenne.Controllers
             var messages = await chatService.GetLastXMessagesAsync(chatChannelId, num);
             return Ok(messages);
         }
-    }
-
-    // DTO para o request de iniciar chat privado
-    public class StartPrivateChatRequest
-    {
-        [Required]
-        public string RecipientUserId { get; set; } = string.Empty;
     }
 }
