@@ -13,7 +13,7 @@ namespace perenne.Interfaces
         Task<Post> GetPostByIdAsync(Guid id);
 
         // Gets all
-        Task<IEnumerable<Post>> GetPostsByFeedIdAsync(Guid feedId);
+        Task<IEnumerable<Post>> GetAllPostsByFeedIdAsync(Guid feedId);
 
         // Gets X
         Task<IEnumerable<Post>> GetLastXPostsAsync(Guid feedId, int num);

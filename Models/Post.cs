@@ -11,6 +11,8 @@ namespace perenne.Models
 
         public string? ImageUrl { get; set; }
 
+        public int Likes { get; set; } = 0;
+
         // Foreign Keys
         [Required]
         public required Guid FeedId { get; set; }

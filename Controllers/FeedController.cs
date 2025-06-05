@@ -16,7 +16,7 @@ namespace perenne.Controllers
     {
         // [host]/api/feed/{groupIdString}/post
         [HttpPost("{groupIdString}/createpost")]
-        public async Task<ActionResult<PostFto>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
+        public async Task<ActionResult<PostFTO>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
         {
             var user = await GetCurrentUser();
             var groupId = groupService.ParseGroupId(groupIdString);
@@ -51,14 +51,7 @@ namespace perenne.Controllers
             if (createdPost == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the post." });
 
-            var answer = new PostFto
-            {
-                Title = createdPost.Title,
-                Content = createdPost.Content!,
-                Creator = createdPost.UserId,
-                ImageUrl = createdPost.ImageUrl,
-                CreatedAt = createdPost.CreatedAt
-            };
+            var answer = new PostFTO(createdPost);
 
             return Ok(answer);
         }
@@ -85,30 +78,42 @@ namespace perenne.Controllers
             return Ok(result);   
         }
 
+        // [host]/api/feed/{groupIdString}/getallposts
+        [HttpGet("{groupIdString}/getallposts")]
+        public async Task<ActionResult<IEnumerable<PostFTO>>> GetAllPosts(string groupIdString)
+        {
+            if (!Guid.TryParse(groupIdString, out var groupId))
+                return BadRequest(new { message = "Feed ID inválido." });
+            var group = await groupService.GetGroupByIdAsync(groupId); 
+            if (group == null) return NotFound(new { message = "Grupo não encontrado." });
+            if (group.Feed == null) return NotFound(new { message = "Feed não associado ao grupo." });
+            var posts = await feedService.GetAllPostsByFeedIdAsync(group.Feed.Id);
+            var answer = posts.Select(x => new PostFTO(x)).ToList();
+            return Ok(answer);
+        }
+
+
         // [host]/api/feed/{groupIdString}/getposts/{num}
         [HttpGet("{groupIdString}/getposts/{num}")]
-        public async Task<ActionResult<IEnumerable<PostFto>>> GetLastXPosts(string groupIdString, int num)
+        public async Task<ActionResult<IEnumerable<PostFTO>>> GetLastXPosts(string groupIdString, int num)
         {
-            if (!Guid.TryParse(groupIdString, out var groupId)) return BadRequest(new { message = "Feed ID inválido." });
+            if (!Guid.TryParse(groupIdString, out var groupId))
+                return BadRequest(new { message = "Feed ID inválido." });
+
             if (num <= 0) return BadRequest(new { message = "Número de posts deve ser positivo." });
 
             var group = await groupService.GetGroupByIdAsync(groupId);
-            var feedId = group.Feed!.Id;
-            var posts = await feedService.GetLastXPostsAsync(feedId, num);
+            if (group == null) return NotFound(new { message = "Grupo não encontrado." });
 
-            var answer = posts.Select((Post x) =>
-            new PostFto()
-            {
-                Id = x.Id,
-                Title = x.Title,
-                Content = x.Content!,
-                ImageUrl = x.ImageUrl,
-                Creator = (Guid)x.CreatedById!,
-                CreatedAt = x.CreatedAt
-            });
+            if (group.Feed == null) return NotFound(new { message = "Feed não associado ao grupo." });
+
+            var posts = await feedService.GetLastXPostsAsync(group.Feed.Id, num);
+
+            var answer = posts.Select(x => new PostFTO(x)).ToList();
 
             return Ok(answer);
         }
+
 
         // Utils
 

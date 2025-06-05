@@ -59,7 +59,7 @@ namespace perenne.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<Post>> GetPostsByFeedIdAsync(Guid feedId)
+        public async Task<IEnumerable<Post>> GetAllPostsByFeedIdAsync(Guid feedId)
         {
             return await _context.Posts
                 .Where(p => p.FeedId == feedId)
