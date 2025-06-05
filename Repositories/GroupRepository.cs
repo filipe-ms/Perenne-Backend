@@ -40,7 +40,7 @@ namespace perenne.Repositories
         public async Task<Group> CreateGroupAsync(Group group)
         {
             bool exists = await context.Groups
-                .AnyAsync(g => g.Name.Equals(group.Name, StringComparison.OrdinalIgnoreCase));
+                .AnyAsync(g => g.Name.ToLower() == group.Name.ToLower());
 
             if (exists)
             {

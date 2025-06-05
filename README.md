@@ -105,4 +105,3 @@ dotnet run
 - [Rafael](https://github.com/rafael-zzz/)
 - [Raphael](https://github.com/rafatito03/)
 - [Marcelo](https://github.com/marceloh090/)
-- 
