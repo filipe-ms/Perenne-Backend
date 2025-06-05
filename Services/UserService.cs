@@ -33,4 +33,9 @@ public class UserService(IUserRepository userRepository) : IUserService
 
         return guid;
     }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    {
+        return userRepository.GetAllUsersAsync();
+    }
 }

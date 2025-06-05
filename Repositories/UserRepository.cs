@@ -42,11 +42,17 @@ public class UserRepository(ApplicationDbContext _context) : IUserRepository
 
     public async Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if(user==null) throw new KeyNotFoundException($"Usuário com ID {userId} não encontrado.");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new KeyNotFoundException($"Usuário com ID {userId} não encontrado.");
         user.SystemRole = newRole;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    {
+        var users = await _context.Users.ToListAsync();
+        if (users == null || users.Count == 0) return [];
+        return users;
     }
 }

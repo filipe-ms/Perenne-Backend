@@ -98,6 +98,16 @@ public class UserController(IUserService userService, IGroupService groupService
         return Ok(userFTO);
     }
 
+    // [host]/api/user/getallusers
+    [HttpGet(nameof(GetAllUsers))]
+    public async Task<ActionResult<IEnumerable<ProfileInfoFTO>>> GetAllUsers()
+    {
+        var users = await userService.GetAllUsersAsync();
+        if (users == null || !users.Any()) return Ok(Enumerable.Empty<ProfileInfoFTO>());
+        var userDtos = users.Select(u => new ProfileInfoFTO(u)).ToList();
+        return Ok(userDtos);
+    }
+
     // Utils
     private Guid? GetCurrentUserId()
     {

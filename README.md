@@ -3,19 +3,18 @@
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
-```
+---
 Informação para os avaliadores:
 A branch mais atual (e usada no deploy) é a [Prod](https://github.com/filipe-ms/Perenne-Backend/tree/prod).
-Por favor, visitem e testem [aqui]!(https://perenne-gray.vercel.app/)
+Por favor, visitem e testem [aqui](https://perenne-gray.vercel.app/)!
 
 Informações sobre o deploy:
 - Frontend está hospedado no Vercel (https://vercel.com/).
 - Backend e banco de dados estão hospedados no Render (https://render.com/).
 
-Obs: As instruções abaixo podem não estar consistentes devido ao nosso CI/CD.
+Obs: As instruções abaixo podem não estar consistentes devido ao nosso CI/CD. Podem ser necessárias mudanças no `program.cs`.
 Obs²: Algumas funcionalidades não foram implementadas (como upload de arquivos) pois só temos direito a 256mb de armazenamento.
-
-```
+---
 
 
 # Perenne – Backend
@@ -58,13 +57,11 @@ Antes de começar, você precisará ter instalado:
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
 - Banco de dados PostgreSQL (com string de conexão válida).
 
----
-
 ## Instalação
 
 1. **Clone o repositório**
 ```
-1. git clone https://github.com/filipe-ms/Perenne-Backend
+git clone https://github.com/filipe-ms/Perenne-Backend
 ```
 
 2. **Configure o ```appsettings.json``` com a string de conexão do banco de dados.**

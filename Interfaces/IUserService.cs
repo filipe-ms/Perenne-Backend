@@ -1,4 +1,6 @@
-﻿using perenne.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using perenne.FTOs;
+using perenne.Models;
 
 namespace perenne.Interfaces
 {
@@ -8,5 +10,6 @@ namespace perenne.Interfaces
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId);
         Guid ParseUserId(string? str);
         Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole);
+        Task<IEnumerable<User>> GetAllUsersAsync();
     }
 }
