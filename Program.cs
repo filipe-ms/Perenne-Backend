@@ -190,6 +190,13 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddOpenApi();
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiração da sessão
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -232,13 +239,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiração da sessão
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
 
 app.UseRouting();
 

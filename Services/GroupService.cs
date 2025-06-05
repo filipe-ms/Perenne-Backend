@@ -1,9 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
-using perenne.DTOs;
+﻿using perenne.DTOs;
 using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
-using perenne.Repositories;
 
 namespace perenne.Services
 {
@@ -32,11 +30,7 @@ namespace perenne.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            var newgroup = await repository.CreateGroupAsync(group);
-            if (newgroup == null)
-                throw new Exception("Failed to create the group in the repository.");
-
-
+            var newgroup = await repository.CreateGroupAsync(group) ?? throw new Exception("Failed to create the group in the repository.");
             ChatChannel chat = new()
             {
                 CreatedAt = DateTime.UtcNow,

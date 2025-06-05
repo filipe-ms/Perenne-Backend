@@ -4,15 +4,15 @@ using perenne.Repositories;
 
 namespace perenne.Services
 {
-    public class GuestService(IUserRepository _userRepository) : IGuestService
+    public class GuestService(IUserRepository userRepository) : IGuestService
     {
         public async Task<bool> CreateUserAsync(User user)
         {
-            return await _userRepository.CreateUserAsync(user);
+            return await userRepository.CreateUserAsync(user);
         }
         public async Task<User> UserLoginAsync(string email, string password)
         {
-            var user = await _userRepository.GetUserByEmailAsync(email);
+            var user = await userRepository.GetUserByEmailAsync(email);
             if (user == null || user.Password != password)
                 throw new Exception("Invalid Email or Password");
             return user;
