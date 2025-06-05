@@ -1,4 +1,5 @@
 ﻿using perenne.Models;
+using perenne.Utils;
 
 namespace perenne.FTOs
 {
@@ -9,7 +10,9 @@ namespace perenne.FTOs
         public string Content { get; init; }
         public string? ImageUrl { get; init; }
         public int Likes { get; init; }
-        public Guid Creator { get; init; }
+        public string FirstName { get; init; }
+        public string LastName { get; init; }
+        public string Role { get; init; }
         public DateTime CreatedAt { get; init; }
 
         public PostFTO(Post post)
@@ -19,7 +22,9 @@ namespace perenne.FTOs
             Content = post.Content!;
             ImageUrl = post.ImageUrl;
             Likes = post.Likes;
-            Creator = (Guid)post.CreatedById!;
+            FirstName = post.CreatedBy!.FirstName;
+            LastName = post.CreatedBy!.LastName;
+            Role = post.CreatedBy!.SystemRole.EnumToName();
             CreatedAt = post.CreatedAt;
         }
     }

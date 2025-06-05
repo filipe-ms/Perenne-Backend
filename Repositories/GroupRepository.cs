@@ -178,7 +178,7 @@ namespace perenne.Repositories
         // Group Join Request
         public async Task<GroupJoinRequest> CreateJoinRequestAsync(GroupJoinRequest request)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             // Detach related entities if they are already tracked to avoid issues with AddAsync
             if (request.User != null) context.Entry(request.User).State = EntityState.Unchanged;
