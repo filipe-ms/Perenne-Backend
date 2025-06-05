@@ -7,7 +7,7 @@
 ---
 <h4 align="center">**Informação para os avaliadores**</h4>
 
-A branch mais atual (e usada no deploy) é a [Prod](https://github.com/filipe-ms/Perenne-Backend/tree/prod).
+A branch mais atual (e usada no deploy) é a [Master]([https://github.com/filipe-ms/Perenne-Backend/tree/prod](https://github.com/filipe-ms/Perenne-Backend/tree/master)).
 
 Por favor, visitem e testem nosso site [aqui](https://perenne-gray.vercel.app/)!
 
