@@ -7,7 +7,7 @@
 ---
 <h4 align="center">**Informação para os avaliadores**</h4>
 
-A branch mais atual (e usada no deploy) é a [Prod](https://github.com/filipe-ms/Perenne-Backend/tree/prod).
+A branch mais atual (e usada no deploy) é a [master](https://github.com/filipe-ms/Perenne-Backend/tree/master).
 
 Por favor, visitem e testem nosso site [aqui](https://perenne-gray.vercel.app/)!
 
@@ -68,13 +68,12 @@ Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial p
 
 1. **Clone o repositório**
 ```
-git clone https://github.com/filipe-ms/Perenne-Backend
+git clone https://github.com/filipe-ms/Perenne-Backend.git
 ```
 
 2. **Substitua `Program.cs`, por este:**
-```
-TODO: Fazer upload de um program.cs específico para testes locais e disponibilizar link aqui.
-```
+[Program.cs](https://drive.google.com/drive/folders/1tPw9jQmtIYJhUTZG35Bo3DRWLQ5BzAVm?usp=drive_link)
+
 
 3. **Configure o ```appsettings.json``` com a string de conexão do banco de dados nesta linha.**
 ```
