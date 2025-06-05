@@ -68,7 +68,7 @@ Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial p
 
 1. **Clone o repositório:**
 ```
-git clone -b master https://github.com/filipe-ms/Perenne-Backend
+git clone https://github.com/filipe-ms/Perenne-Backend
 ```
 
 2. **Substitua `Program.cs`, por este:**
