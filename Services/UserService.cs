@@ -36,6 +36,6 @@ public class UserService(IUserRepository userRepository) : IUserService
 
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
-        return userRepository.GetAllUsersAsync();
+        return await userRepository.GetAllUsersAsync();
     }
 }

@@ -13,7 +13,10 @@ Informações sobre o deploy:
 - Backend e banco de dados estão hospedados no Render (https://render.com/).
 
 Obs: As instruções abaixo podem não estar consistentes devido ao nosso CI/CD. Podem ser necessárias mudanças no `program.cs`.
+
 Obs²: Algumas funcionalidades não foram implementadas (como upload de arquivos) pois só temos direito a 256mb de armazenamento.
+
+
 ---
 
 
