@@ -1,67 +1,105 @@
 
-<h1 align="center">⚠️ EM DESENVOLVIMENTO ⚠️</h1>
+<h1 align="center">Este projeto está em desenvolvimento</h1>
+<h3 align="center">A versão desta branch é estável e está pronta para avaliação</h3>
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
-AOS AVALIADORES: POR FAVOR, VERIFIQUEM A BRANCH [PROD](https://github.com/filipe-ms/Perenne-Backend/tree/prod) E O README DE LÁ.
+---
+<h4 align="center">**Informação para os avaliadores**</h4>
 
-# Perenne – Backend
+A branch mais atual (e usada no deploy) é a [Prod](https://github.com/filipe-ms/Perenne-Backend/tree/prod).
 
-Perenne é uma plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
+Por favor, visitem e testem nosso site [aqui](https://perenne-gray.vercel.app/)!
 
-## 📖 Sobre
+Informações sobre o deploy:
+- Frontend está hospedado no Vercel (https://vercel.com/).
+- Backend e banco de dados estão hospedados no Render (https://render.com/).
 
-O **Perenne** é uma plataforma de comunidade construída em arquitetura modular e escalável, que oferece:
+Obs: As instruções de configuração abaixo podem não estar consistentes devido a alterações recentes em nosso CI/CD. Podem ser necessárias mudanças no `program.cs`.
 
-- Interações em grupos e troca de mensagens em tempo real.
-- Feed de notícias personalizado para cada grupo.
-- Gerenciamento de eventos e notificações.
-
-## ✨ Funcionalidades
-
-- **Autenticação e Gerenciamento de Usuários**: registro, login, recuperação de senha e perfis.
-- **Grupos e Permissões**: criação de grupos, atribuição de papéis (admin, moderador, membro) e controle de acesso.
-- **Mensagens em Tempo Real**: chat por grupo usando WebSockets.
-- **Feed de Notícias**: postagens públicas do administrador/gestor.
-- **Eventos**: criação, edição, inscrições e lembretes automáticos.
-
-## 🏗️ Arquitetura e Tecnologias
-
-- **.NET 9.0**: framework principal.
-- **Entity Framework Core**: ORM para persistência de dados.
-- **SignalR**: comunicação em tempo real via WebSockets.
-- **Swagger / OpenAPI**: documentação automática das APIs.
-
-## ⚙️ Pré-requisitos
-
-Antes de começar, você precisará ter instalado em sua máquina:
-
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
-- Banco de dados suportado pelo Entity Framework.
 
 ---
 
-## 🚀 Instalação
+
+# Perenne | Backend
+
+Perenne é uma plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
+
+## Funcionalidades prontas para uso:
+
+- Chat em tempo real público e privado com histórico persistente.
+- Feed de postagens públicas por grupo.
+- Moderação de usuários: silenciar, banir, expulsar e bloquear.
+- Autenticação e gerenciamento de usuários (registro, login, recuperação de senha, perfis).
+- Criação de grupos com papéis (admin, moderador, membro) e controle de permissões.
+- Chat em tempo real por grupo com WebSockets (SignalR).
+
+## No futuro, planejamos expandir o Perenne com:
+
+- Reações a mensagens e enquetes com votos anônimos ou múltiplos.
+- Criação de eventos com edição, inscrição e lembretes.
+- Sistema de notificações (menções, alertas e lembretes configuráveis).
+- Postagens multimídia com upload de arquivos (imagens, vídeos, documentos).
+- Upload de arquivos como documentos de texto, imagens e PDF diretamente no chat.
+- Sistema de tags, filtros por assunto e organização temática.
+- Histórico de ações e logs de moderação por grupo.
+- Gamificação com quizzes, conquistas, níveis e badges.
+
+## Arquitetura e Tecnologias
+
+- **.NET 9.0**: framework principal da aplicação.
+- **Entity Framework Core**: ORM para abstração e persistência de dados.
+- **PostgreSQL**: banco de dados relacional.
+- **SignalR**: para comunicação em tempo real via WebSockets.
+- **Autenticação JWT**: segura, com suporte a roles e claims.
+- **OpenAPI**: documentação automática das APIs.
+- **CORS configurável**: suporte a ambientes com múltiplos frontends.
+
+## Pré-requisitos
+
+Antes de começar, você precisará ter instalado:
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
+- Banco de dados PostgreSQL (com string de conexão válida).
+
+## Configuração | Instalação
+
+Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial para rodar a API localmente **para fins de teste.**.
 
 1. **Clone o repositório**
 ```
 git clone https://github.com/filipe-ms/Perenne-Backend
 ```
-2. **Preencha as chaves de conexão com o banco de dados no ```appsettings.json```**.
 
-3. **Restaure pacotes e build**
+2. **Substitua `Program.cs`, por este:**
+```
+TODO: Fazer upload de um program.cs específico para testes locais e disponibilizar link aqui.
+```
+
+3. **Configure o ```appsettings.json``` com a string de conexão do banco de dados nesta linha.**
+```
+"DefaultConnection": "Host=localhost;Port=5432;Database=database;Username=postgres;Password=Password1234@"
+```
+
+4. **Restaure pacotes e compile o projeto**
 ```
 dotnet restore
 dotnet build
 ```
 
-4. **Rodar com dotnet run**
+5. **Faça a migração do banco de dados**
+```
+dotnet ef migrations add [nome_da_migração]
+dotnet ef database update
+```
+
+6. **Execute a aplicação**
 ```
 dotnet run
 ```
 
 ## Colaboradores
-
+- [Filipe](https://github.com/filipe-ms/)
 - [Débora](https://github.com/DeboraCASouza/)
 - [Yuri](https://github.com/yuricavalcanti06/)
 - [Gabriel](https://github.com/andgabx/)
