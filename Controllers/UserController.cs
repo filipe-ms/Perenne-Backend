@@ -98,7 +98,6 @@ public class UserController(IUserService userService, IGroupService groupService
         return Ok(userFTO);
     }
 
-    // [host]/api/user/getallusers
     [HttpGet(nameof(GetAllUsers))]
     public async Task<ActionResult<IEnumerable<ProfileInfoFTO>>> GetAllUsers()
     {
