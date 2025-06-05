@@ -28,15 +28,15 @@ Perenne é uma plataforma de comunidade modular e escalável para gestão de gru
 ## Funcionalidades prontas para uso:
 
 - Chat em tempo real público e privado com histórico persistente.
-- Feed de postagens públicas por grupo.
-- Moderação de usuários: silenciar, banir, expulsar e bloquear.
+- Feed de postagens públicas por grupo com reação de like.
+- Moderação de usuários: silenciar, expulsar e bloquear.
 - Autenticação e gerenciamento de usuários (registro, login, recuperação de senha, perfis).
 - Criação de grupos com papéis (admin, moderador, membro) e controle de permissões.
 - Chat em tempo real por grupo com WebSockets (SignalR).
 
 ## No futuro, planejamos expandir o Perenne com:
 
-- Reações a mensagens e enquetes com votos anônimos ou múltiplos.
+- Mais reações a mensagens e enquetes com votos anônimos ou múltiplos.
 - Criação de eventos com edição, inscrição e lembretes.
 - Sistema de notificações (menções, alertas e lembretes configuráveis).
 - Postagens multimídia com upload de arquivos (imagens, vídeos, documentos).
@@ -64,35 +64,35 @@ Antes de começar, você precisará ter instalado:
 
 ## Configuração | Instalação
 
-Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial para rodar a API localmente **para fins de teste.**.
+Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial para rodar a API localmente **para fins de teste.**
 
-1. **Clone o repositório**
+1. **Clone o repositório:**
 ```
-git clone https://github.com/filipe-ms/Perenne-Backend.git
+git clone -b master https://github.com/filipe-ms/Perenne-Backend
 ```
 
 2. **Substitua `Program.cs`, por este:**
 [Program.cs](https://drive.google.com/drive/folders/1tPw9jQmtIYJhUTZG35Bo3DRWLQ5BzAVm?usp=drive_link)
 
 
-3. **Configure o ```appsettings.json``` com a string de conexão do banco de dados nesta linha.**
+3. **Configure o `appsettings.json` com as informações de conexão do banco de dados nesta linha:**
 ```
 "DefaultConnection": "Host=localhost;Port=5432;Database=database;Username=postgres;Password=Password1234@"
 ```
 
-4. **Restaure pacotes e compile o projeto**
+4. **Restaure pacotes e compile o projeto:**
 ```
 dotnet restore
 dotnet build
 ```
 
-5. **Faça a migração do banco de dados**
+5. **Faça a migração do banco de dados:**
 ```
-dotnet ef migrations add [nome_da_migração]
+dotnet ef migrations add nome_da_migração
 dotnet ef database update
 ```
 
-6. **Execute a aplicação**
+6. **Execute a aplicação:**
 ```
 dotnet run
 ```
@@ -105,4 +105,4 @@ dotnet run
 - [Rafael](https://github.com/rafael-zzz/)
 - [Raphael](https://github.com/rafatito03/)
 - [Marcelo](https://github.com/marceloh090/)
-
+- 
