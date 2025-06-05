@@ -3,6 +3,7 @@
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
+AOS AVALIADORES: POR FAVOR, VERIFIQUEM A BRANCH [PROD](https://github.com/filipe-ms/Perenne-Backend/tree/prod) E O README DE LÁ.
 
 # Perenne – Backend
 
