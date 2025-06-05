@@ -39,4 +39,18 @@ public class UserRepository(ApplicationDbContext _context) : IUserRepository
 
         return user.Groups.Select(gm => gm.Group).ToList();
     }
+
+    // Recuperação de senha
+    public async Task<User?> GetUserByPasswordResetTokenAsync(string token)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+    }
+
+    public async Task<bool> UpdateUserAsync(User user)
+    {
+        if (user == null) throw new ArgumentNullException(nameof(user));
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

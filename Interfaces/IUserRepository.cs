@@ -8,5 +8,9 @@ namespace perenne.Repositories
         Task<User> GetUserByEmailAsync(string email);
         Task<User> GetUserByIdAsync(Guid id);
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId);
+
+        // Recuperação de senha
+        Task<User?> GetUserByPasswordResetTokenAsync(string token);
+        Task<bool> UpdateUserAsync(User user);
     }
 }

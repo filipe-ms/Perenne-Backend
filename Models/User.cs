@@ -46,6 +46,10 @@ namespace perenne.Models
         [MaxLength(3000)]
         public string? Bio { get; set; }
 
+        // Campos para recuperação de senha
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
         // Navigation property
         public virtual List<GroupMember> Groups { get; set; } = new();
 

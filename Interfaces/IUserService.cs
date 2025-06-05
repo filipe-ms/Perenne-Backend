@@ -10,6 +10,8 @@ namespace perenne.Interfaces
         Guid ParseUserId(string? str);
         Task<UserInfoDto?> GetUserInfoAsync(Guid userId);
 
-
+        // Recuperação de senha
+        Task<(bool Success, string? Token, string? ErrorMessage)> InitiatePasswordResetAsync(string email); 
+        Task<(bool Success, string? ErrorMessage)> ResetPasswordAsync(string token, string newPassword); 
     }
 }
