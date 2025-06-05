@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using perenne.FTOs;
 using perenne.DTOs;
 using perenne.Interfaces;
 using perenne.Models;
@@ -15,14 +16,16 @@ namespace perenne.Controllers
     {
         // [host]/api/systemadmin/creategroup
         [HttpPost(nameof(CreateGroup))]
-        public async Task<ActionResult<GroupCreateDTO>> CreateGroup([FromBody] GroupCreateDTO dto)
+        public async Task<ActionResult<GroupCreateFTO>> CreateGroup([FromBody] GroupCreateDTO dto)
         {
             var user = await GetCurrentUser();
             if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem criar grupos.");
 
             var createdGroup = await groupService.CreateGroupAsync(dto);
 
-            return Ok(createdGroup);
+            var response = new GroupCreateFTO(createdGroup);
+
+            return Ok(response);
         }
 
         // [host]/api/systemadmin/deletegroup
