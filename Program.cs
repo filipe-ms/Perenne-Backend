@@ -190,6 +190,8 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddOpenApi();
 
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiração da sessão

@@ -147,7 +147,7 @@ namespace perenne.Repositories
             return member ?? throw new KeyNotFoundException($"Member with User ID {userId} not found in Group ID {groupId}.");
         }
 
-        // Group Join Request Operations (New)
+        // Group Join Request Operations
         public async Task<GroupJoinRequest> CreateJoinRequestAsync(GroupJoinRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
@@ -194,7 +194,7 @@ namespace perenne.Repositories
 
         public async Task<GroupJoinRequest> UpdateJoinRequestAsync(GroupJoinRequest request)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
             context.GroupJoinRequests.Update(request);
             await context.SaveChangesAsync();
             return request;
