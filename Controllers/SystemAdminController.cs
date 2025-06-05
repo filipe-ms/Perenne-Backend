@@ -15,7 +15,7 @@ namespace perenne.Controllers
     {
         // [host]/api/systemadmin/creategroup
         [HttpPost(nameof(CreateGroup))]
-        public async Task<ActionResult<GroupCreateDto>> CreateGroup([FromBody] GroupCreateDto dto)
+        public async Task<ActionResult<GroupCreateDTO>> CreateGroup([FromBody] GroupCreateDTO dto)
         {
             var user = await GetCurrentUser();
             if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem criar grupos.");
@@ -27,7 +27,7 @@ namespace perenne.Controllers
 
         // [host]/api/systemadmin/deletegroup
         [HttpDelete(nameof(DeleteGroup))]
-        public async Task<ActionResult<bool>> DeleteGroup([FromBody] GroupDeleteDto dto)
+        public async Task<ActionResult<bool>> DeleteGroup([FromBody] GroupDeleteDTO dto)
         {
             var user = await GetCurrentUser();
             if (!IsSystemAdmin(user.SystemRole)) return Forbid("Apenas administradores podem remover grupos.");
@@ -39,7 +39,7 @@ namespace perenne.Controllers
 
         // [host]/api/systemadmin/updategroup
         [HttpPut(nameof(UpdateGroup))]
-        public async Task<ActionResult<GroupUpdateDto>> UpdateGroup([FromBody] GroupUpdateDto dto)
+        public async Task<ActionResult<GroupUpdateDTO>> UpdateGroup([FromBody] GroupUpdateDTO dto)
         {
             var requester = await GetCurrentUser();
             var groupId = groupService.ParseGroupId(dto.GroupIdString);

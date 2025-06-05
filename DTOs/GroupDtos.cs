@@ -1,15 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography.X509Certificates;
 
 namespace perenne.DTOs
 {
-    public record GroupDeleteDto
+    public record GroupDeleteDTO
     {
         [Required(ErrorMessage = "O ID do grupo é obrigatório.")]
         public required string GroupIdString { get; init; }
     }
 
-    public record GroupCreateDto
+    public record GroupCreateDTO
     {
         [Required(ErrorMessage = "O campo Nome é obrigatório.")]
         [MinLength(3, ErrorMessage = "O nome deve ter ao menos 3 caracteres.")]
@@ -19,7 +18,7 @@ namespace perenne.DTOs
     }
 
 
-    public record GroupSummaryDto
+    public record GroupSummaryDTO
     {
         public Guid Id { get; init; }
         public required string Name { get; init; }
@@ -27,7 +26,7 @@ namespace perenne.DTOs
         public int MemberCount { get; init; }
     }
 
-    public record GroupUpdateDto(
+    public record GroupUpdateDTO(
         [Required(ErrorMessage = "O ID do grupo é obrigatório.")]
         string GroupIdString,
         string? NewNameString,

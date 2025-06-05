@@ -3,25 +3,29 @@ using perenne.Data;
 using perenne.FTOs;
 using perenne.Interfaces;
 using perenne.Models;
+using System.Globalization;
+using System.Text;
 
 namespace perenne.Repositories
 {
     public class GroupRepository(ApplicationDbContext context) : IGroupRepository
     {
         // Group CRUD
-        public async Task<IEnumerable<GroupListFto>> GetAllAsync()
+        public async Task<IEnumerable<GroupListFTO>> GetAllAsync()
         {
             var groups = await context.Groups.ToListAsync();
 
-            var result = groups.Select(g => new GroupListFto
-            {
-                Id = g.Id,
-                Name = g.Name,
-                Description = g.Description,
-                IsPrivate = g.IsPrivate,
-            });
+            var filteredGroups = groups
+                .Where(g => !RemoveAccents(g.Name).Equals("geral", StringComparison.OrdinalIgnoreCase))
+                .Select(g => new GroupListFTO
+                {
+                    Id = g.Id,
+                    Name = g.Name,
+                    Description = g.Description,
+                    IsPrivate = g.IsPrivate,
+                });
 
-            return result;
+            return filteredGroups;
         }
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {
@@ -35,6 +39,14 @@ namespace perenne.Repositories
         }
         public async Task<Group> CreateGroupAsync(Group group)
         {
+            bool exists = await context.Groups
+                .AnyAsync(g => g.Name.Equals(group.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (exists)
+            {
+                throw new InvalidOperationException($"Já existe um grupo com o nome '{group.Name}'.");
+            }
+
             var entry = await context.Groups.AddAsync(group);
             Group g = entry.Entity;
             await context.SaveChangesAsync();
@@ -42,20 +54,35 @@ namespace perenne.Repositories
         }
         public async Task<Group> UpdateGroupAsync(Group group)
         {
-            var g = context.Groups.Update(group);
+            var existingGroup = await context.Groups.FindAsync(group.Id)
+                ?? throw new KeyNotFoundException($"Grupo com ID {group.Id} não encontrado.");
+
+            bool isGeral = existingGroup.Name.Equals("Geral", StringComparison.OrdinalIgnoreCase);
+            bool nameChanged = !group.Name.Equals(existingGroup.Name, StringComparison.Ordinal);
+
+            if (isGeral && nameChanged) throw new InvalidOperationException("Não é permitido alterar o nome do grupo 'Geral'.");
+
+            context.Entry(existingGroup).CurrentValues.SetValues(group);
+
             await context.SaveChangesAsync();
-            return g.Entity;
+            return existingGroup;
         }
         public async Task<bool> DeleteGroupAsync(Guid groupId)
         {
-            var group = context.Groups.Find(groupId) ?? throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
+            var group = await context.Groups.FindAsync(groupId)
+                ?? throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
+
+            if (group.Name.Equals("Geral", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Não é possível excluir o grupo 'Geral'.");
+            }
+
             context.Groups.Remove(group);
             await context.SaveChangesAsync();
             return true;
         }
 
-
-        // GroupMember Operations
+        // GroupMember
         public async Task<GroupMember> AddGroupMemberAsync(GroupMember member)
         {
             ArgumentNullException.ThrowIfNull(member);
@@ -97,18 +124,19 @@ namespace perenne.Repositories
         {
             var group = await context.Groups
                 .Include(g => g.Members)
-                .FirstOrDefaultAsync(g => g.Id == groupId);
+                .FirstOrDefaultAsync(g => g.Id == groupId) ?? throw new KeyNotFoundException($"Grupo com ID {groupId} não encontrado.");
 
-            if (group != null)
+            if (group.Name.Equals("Geral", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Não é possível excluir alguém do grupo 'Geral'.");
+
+            var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+
+            if (member != null)
             {
-                var member = group.Members.FirstOrDefault(m => m.UserId == userId);
-                if (member != null)
-                {
-                    group.Members.Remove(member);
-                    await context.SaveChangesAsync();
-                }
+                group.Members.Remove(member);
+                await context.SaveChangesAsync();
+                return true;
             }
-            return true;
+            return false;
         }
         public async Task<GroupMember> UpdateGroupMemberAsync(GroupMember member)
         {
@@ -147,7 +175,7 @@ namespace perenne.Repositories
             return member ?? throw new KeyNotFoundException($"Member with User ID {userId} not found in Group ID {groupId}.");
         }
 
-        // Group Join Request Operations
+        // Group Join Request
         public async Task<GroupJoinRequest> CreateJoinRequestAsync(GroupJoinRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
@@ -160,7 +188,6 @@ namespace perenne.Repositories
             await context.SaveChangesAsync();
             return request;
         }
-
         public async Task<GroupJoinRequest?> GetJoinRequestByIdAsync(Guid requestId)
         {
             return await context.GroupJoinRequests
@@ -168,13 +195,11 @@ namespace perenne.Repositories
                 .Include(r => r.Group)
                 .FirstOrDefaultAsync(r => r.Id == requestId);
         }
-
         public async Task<GroupJoinRequest?> GetPendingJoinRequestAsync(Guid userId, Guid groupId)
         {
             return await context.GroupJoinRequests
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.GroupId == groupId && r.Status == RequestStatus.Pending);
         }
-
         public async Task<IEnumerable<GroupJoinRequest>> GetPendingJoinRequestsForGroupAsync(Guid groupId)
         {
             return await context.GroupJoinRequests
@@ -182,7 +207,6 @@ namespace perenne.Repositories
                 .Include(r => r.User) // Include user details for the admin to see
                 .ToListAsync();
         }
-
         public async Task<IEnumerable<GroupJoinRequest>> GetJoinRequestsForUserAsync(Guid userId)
         {
             return await context.GroupJoinRequests
@@ -191,7 +215,6 @@ namespace perenne.Repositories
                 .OrderByDescending(r => r.RequestedAt)
                 .ToListAsync();
         }
-
         public async Task<GroupJoinRequest> UpdateJoinRequestAsync(GroupJoinRequest request)
         {
             ArgumentNullException.ThrowIfNull(request);
@@ -199,7 +222,6 @@ namespace perenne.Repositories
             await context.SaveChangesAsync();
             return request;
         }
-
         public async Task<bool> DeleteJoinRequestAsync(Guid requestId)
         {
             var request = await context.GroupJoinRequests.FindAsync(requestId);
@@ -210,6 +232,34 @@ namespace perenne.Repositories
                 return true;
             }
             return false;
+        }
+
+        // Outros
+        public async Task<Group?> GetMainGroupAsync()
+        {
+            var mainGroupName = "Geral";
+            var mainGroup = await context.Groups
+                .FirstOrDefaultAsync(g => EF.Functions.ILike(g.Name, mainGroupName));
+            return mainGroup;
+        }
+        public static string RemoveAccents(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
     }
 }

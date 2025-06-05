@@ -2,7 +2,7 @@
 
 namespace perenne.DTOs
 {
-    public record GuestLoginDto
+    public record GuestLoginDTO
     {
         [Required(ErrorMessage = "O campo Email é obrigatório.")]
         [EmailAddress(ErrorMessage = "O formato do Email é inválido.")]
@@ -12,7 +12,7 @@ namespace perenne.DTOs
         public string? Password { get; init; } = default!;
     }
 
-    public record GuestRegisterDto
+    public record GuestRegisterDTO
     {
         [Required(ErrorMessage = "O campo Email é obrigatório.")]
         [EmailAddress(ErrorMessage = "O formato do Email é inválido.")]

@@ -12,10 +12,10 @@ A branch mais atual (e usada no deploy) é a [master](https://github.com/filipe-
 Por favor, visitem e testem nosso site [aqui](https://perenne-gray.vercel.app/)!
 
 Informações sobre o deploy:
-- Frontend está hospedado no Vercel (https://vercel.com/).
-- Backend e banco de dados estão hospedados no Render (https://render.com/).
+- Frontend está hospedado no [Vercel](https://vercel.com/).
+- Backend e banco de dados estão hospedados no [Render](https://render.com/).
 
-Obs: As instruções de configuração abaixo podem não estar consistentes devido a alterações recentes em nosso CI/CD. Podem ser necessárias mudanças no `program.cs`.
+Obs: `FTO` é uma brincadeira interna para diferenciar os `DTOs` de saída dos de entrada. `DTO` seria _Dentro Transfer Object_ (entrada), enquanto `FTO` seria _Fora Transfer Object_ (saída).
 
 
 ---

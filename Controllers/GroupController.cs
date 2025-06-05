@@ -23,7 +23,7 @@ namespace perenne.Controllers
 
             if (group == null) return NotFound("Grupo não encontrado!");
 
-            var members = group.Members.Select(gm => new MemberFto(gm)).ToList();
+            var members = group.Members.Select(gm => new MemberFTO(gm)).ToList();
 
             var groupFto = new GroupFTO(group.Name, group.Description ?? string.Empty, members);
 
@@ -66,9 +66,20 @@ namespace perenne.Controllers
             }
         }
 
+        // [host]/api/group/getmain
+        [HttpGet(nameof(GetMain))]
+        public async Task<ActionResult<GroupFTO>> GetMain()
+        {
+            var userId = GetCurrentUserId();
+            var group = await groupService.GetMainGroupAsync();
+            var members = group!.Members.Select(gm => new MemberFTO(gm)).ToList();
+            var groupFto = new GroupFTO(group.Name, group.Description ?? string.Empty, members);
+            return Ok(groupFto);
+        }
+
         // [host]/api/group/getall
         [HttpGet(nameof(GetAll))]
-        public async Task<IEnumerable<GroupListFto>> GetAll() =>
+        public async Task<IEnumerable<GroupListFTO>> GetAll() =>
             await groupService.GetAllAsync();
 
         // Utils

@@ -7,9 +7,9 @@ namespace perenne.Interfaces
     public interface IGroupService
     {
         // Group CRUD
-        Task<IEnumerable<GroupListFto>> GetAllAsync();
+        Task<IEnumerable<GroupListFTO>> GetAllAsync();
         Task<Group> GetGroupByIdAsync(Guid id);
-        Task<GroupCreateDto> CreateGroupAsync(GroupCreateDto dto);
+        Task<Group> CreateGroupAsync(GroupCreateDTO dto);
         Task<bool> DeleteGroupAsync(Guid groupId);
         Task<Group> UpdateGroupAsync(Group group);
 
@@ -22,7 +22,7 @@ namespace perenne.Interfaces
         // Utils
         Guid ParseGroupId(string groupIdString);
 
-        // Group Join Request Operations
+        // Group Join Request
         Task<GroupJoinRequest?> GetJoinRequestByIdAsync(Guid requestId);
         Task<GroupJoinRequest> RequestToJoinGroupAsync(Guid userId, Guid groupId, string? message);
         Task<IEnumerable<GroupJoinRequest>> GetPendingRequestsForGroupAsync(Guid groupId, Guid adminUserId);
@@ -30,9 +30,12 @@ namespace perenne.Interfaces
         Task<GroupMember?> ApproveJoinRequestAsync(Guid requestId, Guid adminUserId);
         Task<bool> RejectJoinRequestAsync(Guid requestId, Guid adminUserId);
 
-        // Group operations
+        // Group
         Task<DateTime> MuteUserInGroupAsync(GroupMember groupMemberToMute);
         Task<bool> UnmuteUserInGroupAsync(GroupMember groupMemberToMute);
         Task<bool> RemoveMemberFromGroupAsync(Guid groupId, Guid userId);
+
+        // Outros
+        Task<Group?> GetMainGroupAsync();
     }
 }

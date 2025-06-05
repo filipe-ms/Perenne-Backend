@@ -1,6 +1,6 @@
 ﻿namespace perenne.FTOs
 {
-    public class GroupListFto
+    public class GroupListFTO
     {
         public required Guid Id { get; set; }
         public required string Name { get; set; }

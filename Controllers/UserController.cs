@@ -14,7 +14,7 @@ public class UserController(IUserService userService, IGroupService groupService
 {
     // [host]/api/user/getgroups/
     [HttpGet(nameof(GetGroups))]
-    public async Task<ActionResult<IEnumerable<GroupSummaryDto>>> GetGroups()
+    public async Task<ActionResult<IEnumerable<GroupSummaryDTO>>> GetGroups()
     {
         // Pega o user ID baseado nas claims do JWT
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -24,9 +24,9 @@ public class UserController(IUserService userService, IGroupService groupService
         {
             var groups = await userService.GetGroupsByUserIdAsync(userIdGuid);
 
-            if (groups == null || !groups.Any()) return Ok(Enumerable.Empty<GroupSummaryDto>());
+            if (groups == null || !groups.Any()) return Ok(Enumerable.Empty<GroupSummaryDTO>());
 
-            var groupDtos = groups.Select(g => new GroupSummaryDto
+            var groupDtos = groups.Select(g => new GroupSummaryDTO
             {
                 Id = g.Id,
                 Name = g.Name,

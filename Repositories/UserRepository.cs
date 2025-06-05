@@ -4,28 +4,28 @@ using perenne.Models;
 
 namespace perenne.Repositories;
 
-public class UserRepository(ApplicationDbContext _context) : IUserRepository
+public class UserRepository(ApplicationDbContext context) : IUserRepository
 {
-    public async Task<bool> CreateUserAsync(User user)
+    public async Task<User> CreateUserAsync(User user)
     {
-        if (user == null) throw new ArgumentNullException(nameof(user));
-        await _context.Users.AddAsync(user);
-        await _context.SaveChangesAsync();
-        return true;
+        ArgumentNullException.ThrowIfNull(user);
+        var entry = await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
+        return entry.Entity;
     }
     public async Task<User> GetUserByEmailAsync(string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
         return user == null ? throw new KeyNotFoundException($"User with email {email} not found.") : user;
     }
     public async Task<User> GetUserByIdAsync(Guid id)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
         return user == null ? throw new KeyNotFoundException($"User with ID {id} not found.") : user;
     }
     public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
     {
-        var user = await _context.Users
+        var user = await context.Users
             .AsNoTracking()
             .Include(u => u.Groups)
                 .ThenInclude(gm => gm.Group)
@@ -42,16 +42,16 @@ public class UserRepository(ApplicationDbContext _context) : IUserRepository
 
     public async Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new KeyNotFoundException($"Usuário com ID {userId} não encontrado.");
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new KeyNotFoundException($"Usuário com ID {userId} não encontrado.");
         user.SystemRole = newRole;
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
         return true;
     }
 
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
-        var users = await _context.Users.ToListAsync();
+        var users = await context.Users.ToListAsync();
         if (users == null || users.Count == 0) return [];
         return users;
     }

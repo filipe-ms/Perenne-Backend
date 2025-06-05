@@ -2,7 +2,7 @@
 
 namespace perenne.FTOs
 {
-    public record MemberFto
+    public record MemberFTO
     {
         public Guid UserId { get; set; }
         public string? FirstName { get; set; }
@@ -12,7 +12,7 @@ namespace perenne.FTOs
         public Guid MutedBy { get; set; }
         public DateTime? MutedUntil { get; set; }
 
-        public MemberFto(GroupMember member)
+        public MemberFTO(GroupMember member)
         {
             UserId = member.UserId;
             FirstName = member.User.FirstName;
@@ -24,5 +24,5 @@ namespace perenne.FTOs
         }
     }
 
-    public record GroupFTO(string Name, string Description, List<MemberFto>? MemberList);
+    public record GroupFTO(string Name, string Description, List<MemberFTO>? MemberList);
 }

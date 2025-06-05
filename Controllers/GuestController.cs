@@ -12,7 +12,7 @@ namespace perenne.Controllers
     {
         // [host]/api/guest/create/
         [HttpPost("create")]
-        public async Task<bool> Create([FromBody] GuestRegisterDto dto)
+        public async Task<bool> Create([FromBody] GuestRegisterDTO dto)
         {
             var user = new User
             {
@@ -30,7 +30,7 @@ namespace perenne.Controllers
         
         // [host]/api/guest/login/
         [HttpPost("login")]
-        public async Task<ProfileInfoFTO> Login([FromBody] GuestLoginDto dto)
+        public async Task<ProfileInfoFTO> Login([FromBody] GuestLoginDTO dto)
         {
             if (dto == null || dto.Email == null || dto.Password == null)
                 throw new ArgumentNullException(nameof(dto));

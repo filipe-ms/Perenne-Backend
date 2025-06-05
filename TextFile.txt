@@ -1,8 +1,8 @@
 ﻿TODO
 
-• Entrar automaticamente no grupo geral,
+
 • Adicionar contagem de reações em posts,
-• Ciar contas template para avaliadores, como admin e usuário
+• Criar contas template para avaliadores, como admin e usuário
 
 
 • Criar identificador único interno para usuários,

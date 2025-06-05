@@ -2,7 +2,7 @@
 
 namespace perenne.DTOs
 {
-    public class PostDto
+    public class PostDTO
     {
         [Required(ErrorMessage = "O campo Título é obrigatório.")]
         [MinLength(2, ErrorMessage = "O Título deve ter no mínimo 2 caracteres.")]

@@ -12,7 +12,7 @@ namespace perenne.Services
         IUserService userService) : IGroupService
     {
         // Group CRUD
-        public async Task<IEnumerable<GroupListFto>> GetAllAsync()
+        public async Task<IEnumerable<GroupListFTO>> GetAllAsync()
         {
             return await repository.GetAllAsync();
         }
@@ -21,7 +21,7 @@ namespace perenne.Services
             var group = await repository.GetGroupByIdAsync(id);
             return group ?? throw new KeyNotFoundException($"Group with ID {id} not found");
         }
-        public async Task<GroupCreateDto> CreateGroupAsync(GroupCreateDto dto)
+        public async Task<Group> CreateGroupAsync(GroupCreateDTO dto)
         {
             Group group = new()
             {
@@ -49,14 +49,10 @@ namespace perenne.Services
             newgroup.ChatChannel = createdChatChannel;
             newgroup.Feed = createdFeed;
 
-            await repository.UpdateGroupAsync(newgroup);
-            GroupCreateDto groupCreateDto = new()
-            {
-                Name = newgroup.Name,
-                Description = newgroup.Description!
-            };
+            var result = await repository.UpdateGroupAsync(newgroup);
+            
 
-            return groupCreateDto;
+            return result;
         }
         public async Task<bool> DeleteGroupAsync(Guid groupId)
         {
@@ -68,7 +64,7 @@ namespace perenne.Services
             return updatedGroup ?? throw new Exception("Failed to update the group in the repository.");
         }
 
-        // Member operations
+        // Member
         public async Task<GroupMember> AddGroupMemberAsync(GroupMember newMember)
         {
             var createdMember = await repository.AddGroupMemberAsync(newMember) ?? throw new Exception("Failed to add member to the group in the repository.");
@@ -95,8 +91,7 @@ namespace perenne.Services
             return guid;
         }
 
-
-        // Group Join Request Operations
+        // Group Join Request
         public async Task<GroupJoinRequest> RequestToJoinGroupAsync(Guid userId, Guid groupId, string? message)
         {
             var group = await GetGroupByIdAsync(groupId);
@@ -133,7 +128,6 @@ namespace perenne.Services
 
             return await repository.CreateJoinRequestAsync(request);
         }
-
         public async Task<IEnumerable<GroupJoinRequest>> GetPendingRequestsForGroupAsync(Guid groupId, Guid adminUserId)
         {
             var group = await GetGroupByIdAsync(groupId);
@@ -154,13 +148,11 @@ namespace perenne.Services
 
             return await repository.GetPendingJoinRequestsForGroupAsync(groupId);
         }
-
         public async Task<IEnumerable<GroupJoinRequest>> GetPendingRequestsForUserAsync(Guid userId)
         {
             var requests = await repository.GetJoinRequestsForUserAsync(userId);
             return requests.Where(r => r.Status == RequestStatus.Pending);
         }
-
         public async Task<GroupMember?> ApproveJoinRequestAsync(Guid requestId, Guid adminUserId)
         {
             var request = await repository.GetJoinRequestByIdAsync(requestId);
@@ -203,7 +195,6 @@ namespace perenne.Services
 
             return addedMember;
         }
-
         public async Task<bool> RejectJoinRequestAsync(Guid requestId, Guid adminUserId)
         {
             var request = await repository.GetJoinRequestByIdAsync(requestId);
@@ -233,14 +224,11 @@ namespace perenne.Services
 
             return true;
         }
-
-
         public async Task<GroupJoinRequest?> GetJoinRequestByIdAsync(Guid requestId)
         {
             var request = await repository.GetJoinRequestByIdAsync(requestId);
             return request;
         }
-
         public async Task<DateTime> MuteUserInGroupAsync(GroupMember groupMemberToMute)
         {
             if (groupMemberToMute == null)
@@ -252,7 +240,6 @@ namespace perenne.Services
 
             return (DateTime)muted.MutedUntil!;
         }
-
         public async Task<bool> UnmuteUserInGroupAsync(GroupMember groupMemberToMute)
         {
             if (groupMemberToMute == null)
@@ -264,13 +251,19 @@ namespace perenne.Services
 
             return unmuted.MutedUntil == null;
         }
-
         public async Task<bool> RemoveMemberFromGroupAsync(Guid groupId, Guid userId)
         {
             if (groupId == Guid.Empty || userId == Guid.Empty)
                 throw new ArgumentException("Group ID and User ID must be valid GUIDs.");
 
             return await repository.RemoveMemberAsync(groupId, userId);
+        }
+
+        // Outros
+
+        public async Task<Group?> GetMainGroupAsync()
+        {
+            return await repository.GetMainGroupAsync();
         }
     }
 }

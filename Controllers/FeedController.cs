@@ -16,7 +16,7 @@ namespace perenne.Controllers
     {
         // [host]/api/feed/{groupIdString}/post
         [HttpPost("{groupIdString}/createpost")]
-        public async Task<ActionResult<PostFTO>> CreatePost(string groupIdString, [FromBody] PostDto newPostDto)
+        public async Task<ActionResult<PostFTO>> CreatePost(string groupIdString, [FromBody] PostDTO newPostDto)
         {
             var user = await GetCurrentUser();
             var groupId = groupService.ParseGroupId(groupIdString);
