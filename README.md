@@ -1,13 +1,13 @@
 
 <h1 align="center">Este projeto está em desenvolvimento</h1>
-<h3 align="center">A versão da branch MASTER estável e está pronta para avaliação</h3>
+<h3 align="center">A versão da branch MASTER é estável e está pronta para avaliação</h3>
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
 ---
 <h4 align="center">**Informação para os avaliadores**</h4>
 
-A branch mais atual (e usada no deploy) é a [Master]([https://github.com/filipe-ms/Perenne-Backend/tree/prod](https://github.com/filipe-ms/Perenne-Backend/tree/master)).
+A branch mais atual (e usada no deploy) é a [Master](https://github.com/filipe-ms/Perenne-Backend/tree/master).
 
 Por favor, visitem e testem nosso site [aqui](https://perenne-gray.vercel.app/)!
 
