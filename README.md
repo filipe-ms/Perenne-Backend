@@ -60,7 +60,7 @@ Perenne é uma plataforma de comunidade modular e escalável para gestão de gru
 Antes de começar, você precisará ter instalado:
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
-- Banco de dados PostgreSQL (com string de conexão válida).
+- Banco de dados PostgreSQL
 
 ## Configuração | Instalação
 
