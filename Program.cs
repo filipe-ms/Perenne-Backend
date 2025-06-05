@@ -183,7 +183,6 @@ builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 });
-//builder.Services.AddDistributedMemoryCache();
 
 // Outros Serviços
 builder.Services.AddControllers();
@@ -234,6 +233,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo de expiração da sessão
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
@@ -245,7 +251,23 @@ app.MapHealthChecks("/healthz");
 app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
    .ExcludeFromDescription();
 
+//app.MapOpenApi();
 
-app.MapOpenApi();
+// Iniciando o cache de mensagens
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var messageCacheService = services.GetRequiredService<IMessageCacheService>();
+        await messageCacheService.InitMessageCacheServiceAsync();
+        Console.WriteLine("Cache de mensagens inicializado com sucesso!");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocorreu um erro ao tentar inicializar o cache de mensagens.");
+    }
+}
 
 app.Run();
