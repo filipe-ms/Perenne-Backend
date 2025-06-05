@@ -3,64 +3,85 @@
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
+```
+Informação para os avaliadores:
+A branch mais atual (e usada no deploy) é a [Prod](https://github.com/filipe-ms/Perenne-Backend/tree/prod).
+Por favor, visitem e testem [aqui]!(https://perenne-gray.vercel.app/)
+
+Informações sobre o deploy:
+- Frontend está hospedado no Vercel (https://vercel.com/).
+- Backend e banco de dados estão hospedados no Render (https://render.com/).
+
+Obs: As instruções abaixo podem não estar consistentes devido ao nosso CI/CD.
+Obs²: Algumas funcionalidades não foram implementadas (como upload de arquivos) pois só temos direito a 256mb de armazenamento.
+
+```
+
 
 # Perenne – Backend
 
 Perenne é uma plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
 
-## 📖 Sobre
+## Funcionalidades principais
 
-O **Perenne** é uma plataforma de comunidade construída em arquitetura modular e escalável, que oferece:
+- Chat em tempo real público e privado com histórico persistente.
+- Feed de postagens públicas por grupo.
+- Moderação de usuários: silenciar, banir, expulsar e bloquear.
+- Autenticação e gerenciamento de usuários (registro, login, recuperação de senha, perfis).
+- Criação de grupos com papéis (admin, moderador, membro) e controle de permissões.
+- Chat em tempo real por grupo com WebSockets (SignalR).
 
-- Interações em grupos e troca de mensagens em tempo real.
-- Feed de notícias personalizado para cada grupo.
-- Gerenciamento de eventos e notificações.
+## Funcionalidades planejadas
 
-## ✨ Funcionalidades
+- Reações a mensagens e enquetes com votos anônimos ou múltiplos.
+- Criação de eventos com edição, inscrição e lembretes.
+- Sistema de notificações (menções, alertas e lembretes configuráveis).
+- Postagens multimídia com upload de arquivos (imagens, vídeos, documentos).
+- Sistema de tags, filtros por assunto e organização temática.
+- Histórico de ações e logs de moderação por grupo.
+- Gamificação com quizzes, conquistas, níveis e badges.
 
-- **Autenticação e Gerenciamento de Usuários**: registro, login, recuperação de senha e perfis.
-- **Grupos e Permissões**: criação de grupos, atribuição de papéis (admin, moderador, membro) e controle de acesso.
-- **Mensagens em Tempo Real**: chat por grupo usando WebSockets.
-- **Feed de Notícias**: postagens públicas do administrador/gestor.
-- **Eventos**: criação, edição, inscrições e lembretes automáticos.
+## Arquitetura e Tecnologias
 
-## 🏗️ Arquitetura e Tecnologias
+- **.NET 9.0**: framework principal da aplicação.
+- **Entity Framework Core**: ORM para abstração e persistência de dados.
+- **PostgreSQL**: banco de dados relacional.
+- **SignalR**: para comunicação em tempo real via WebSockets.
+- **Autenticação JWT**: segura, com suporte a roles e claims.
+- **OpenAPI**: documentação automática das APIs.
+- **CORS configurável**: suporte a ambientes com múltiplos frontends.
 
-- **.NET 9.0**: framework principal.
-- **Entity Framework Core**: ORM para persistência de dados.
-- **SignalR**: comunicação em tempo real via WebSockets.
-- **Swagger / OpenAPI**: documentação automática das APIs.
+## Pré-requisitos
 
-## ⚙️ Pré-requisitos
-
-Antes de começar, você precisará ter instalado em sua máquina:
+Antes de começar, você precisará ter instalado:
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
-- Banco de dados suportado pelo Entity Framework.
+- Banco de dados PostgreSQL (com string de conexão válida).
 
 ---
 
-## 🚀 Instalação
+## Instalação
 
 1. **Clone o repositório**
 ```
-git clone https://github.com/filipe-ms/Perenne-Backend
+1. git clone https://github.com/filipe-ms/Perenne-Backend
 ```
-2. **Preencha as chaves de conexão com o banco de dados no ```appsettings.json```**.
 
-3. **Restaure pacotes e build**
+2. **Configure o ```appsettings.json``` com a string de conexão do banco de dados.**
+
+3. **Restaure pacotes e compile o projeto**
 ```
 dotnet restore
 dotnet build
 ```
 
-4. **Rodar com dotnet run**
+4. **Execute a aplicação**
 ```
 dotnet run
 ```
 
 ## Colaboradores
-
+- [Filipe](https://github.com/filipe-ms/)
 - [Débora](https://github.com/DeboraCASouza/)
 - [Yuri](https://github.com/yuricavalcanti06/)
 - [Gabriel](https://github.com/andgabx/)

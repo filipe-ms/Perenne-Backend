@@ -55,7 +55,6 @@ namespace perenne.Controllers
 
             return Ok(response);
         }
-
         
         [HttpPost("private/start")]
         public async Task<ActionResult<object>> StartOrGetPrivateChat([FromBody] StartPrivateChatRequest request)
