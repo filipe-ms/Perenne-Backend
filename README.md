@@ -1,6 +1,6 @@
 
 <h1 align="center">Este projeto está em desenvolvimento</h1>
-<h3 align="center">A versão desta branch é estável e está pronta para avaliação</h3>
+<h3 align="center">A versão da branch MASTER estável e está pronta para avaliação</h3>
 
 <h4 align="center">[ Ver também: <a href="https://github.com/andgabx/Perenne-Frontend">Perenne-Frontend</a> ]</h4>
 
