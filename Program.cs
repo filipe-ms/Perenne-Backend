@@ -254,7 +254,7 @@ app.MapHealthChecks("/healthz");
 app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
    .ExcludeFromDescription();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapOpenApi();
 
 // Iniciando o cache de mensagens

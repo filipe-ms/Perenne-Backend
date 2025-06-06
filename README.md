@@ -30,7 +30,7 @@ Perenne é uma plataforma de comunidade modular e escalável para gestão de gru
 - Chat em tempo real público e privado com histórico persistente.
 - Feed de postagens públicas por grupo com reação de like.
 - Moderação de usuários: silenciar, expulsar e bloquear.
-- Autenticação e gerenciamento de usuários (registro, login, recuperação de senha, perfis).
+- Autenticação e gerenciamento de usuários (registro, login, perfis).
 - Criação de grupos com papéis (admin, moderador, membro) e controle de permissões.
 - Chat em tempo real por grupo com WebSockets (SignalR).
 
