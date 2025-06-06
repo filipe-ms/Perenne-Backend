@@ -71,9 +71,10 @@ Obs: A configuração dependerá do ambiente de deploy. Segue aqui um tutorial p
 git clone https://github.com/filipe-ms/Perenne-Backend
 ```
 
-2. **Substitua `Program.cs`, por este:**
-[Program.cs](https://drive.google.com/drive/folders/1tPw9jQmtIYJhUTZG35Bo3DRWLQ5BzAVm?usp=drive_link)
-
+2. **Comente esta linha no `Program.cs`:**
+```
+app.UseHttpsRedirection();
+```
 
 3. **Configure o `appsettings.json` com as informações de conexão do banco de dados nesta linha:**
 ```
