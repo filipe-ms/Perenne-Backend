@@ -25,7 +25,7 @@ Obs: `FTO` é uma brincadeira interna para diferenciar os `DTOs` de saída dos d
 
 Perenne é uma plataforma de comunidade modular e escalável para gestão de grupos, mensagens em tempo real, feed de notícias, eventos e notificações.
 
-## Funcionalidades prontas para uso:
+## Funcionalidades prontas para uso (Backend):
 
 - Chat em tempo real público e privado com histórico persistente.
 - Feed de postagens públicas por grupo com reação de like.
