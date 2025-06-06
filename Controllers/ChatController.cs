@@ -45,7 +45,7 @@ namespace perenne.Controllers
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
                     ChatChannelId: msg.ChatChannelId,
-                    
+
                     CreatedAt: msg.CreatedAt,
                     CreatedById: createdById
                 ));
@@ -85,7 +85,7 @@ namespace perenne.Controllers
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
                     ChatChannelId: msg.ChatChannelId,
-                    
+
                     CreatedAt: msg.CreatedAt,
                     CreatedById: createdById
                 ));
@@ -207,7 +207,7 @@ namespace perenne.Controllers
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
                     ChatChannelId: msg.ChatChannelId,
-                    
+
                     CreatedAt: msg.CreatedAt,
                     CreatedById: createdById
                 ));
@@ -229,13 +229,10 @@ namespace perenne.Controllers
 
             var messages = await messageCacheService.GetMessagesByChatChannelIdAsync(channel.Id);
 
-            var user1 = await userService.GetUserByIdAsync(channel.User1Id ?? Guid.Empty);
-            var user2 = await userService.GetUserByIdAsync(channel.User2Id ?? Guid.Empty);
-
-            var response = messages.Select(msg =>
+            var responseTasks = messages.Select(async msg =>
             {
-                var sender = msg.CreatedById == user1?.Id ? user1 : user2;
                 var senderId = msg.CreatedById ?? Guid.Empty;
+                var sender = await userService.GetUserByIdAsync(senderId);
 
                 return new ChatMessageFTO(
                     FirstName: sender?.FirstName ?? "Desconhecido",
@@ -244,11 +241,12 @@ namespace perenne.Controllers
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
                     ChatChannelId: msg.ChatChannelId,
-                    
                     CreatedAt: msg.CreatedAt,
                     CreatedById: senderId
                 );
             });
+
+            var response = await Task.WhenAll(responseTasks);
 
             return Ok(response);
         }
