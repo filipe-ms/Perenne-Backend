@@ -25,7 +25,7 @@ namespace perenne.Repositories
 
             if (chatChannel.IsPrivate && chatChannel.User1Id.HasValue && chatChannel.User2Id.HasValue && chatChannel.User1Id.Value > chatChannel.User2Id.Value)
             {
-               (chatChannel.User1Id, chatChannel.User2Id) = (chatChannel.User2Id, chatChannel.User1Id);
+                (chatChannel.User1Id, chatChannel.User2Id) = (chatChannel.User2Id, chatChannel.User1Id);
             }
 
             var c = await _context.ChatChannels.AddAsync(chatChannel);
