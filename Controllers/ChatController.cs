@@ -5,6 +5,7 @@ using perenne.Models;
 using System.Security.Claims;
 using perenne.DTOs;
 using perenne.FTOs;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace perenne.Controllers
 {
@@ -216,6 +217,7 @@ namespace perenne.Controllers
             return Ok(response);
         }
 
+        // --- MÉTODO CORRIGIDO ---
         [HttpGet("private/{otherUserIdString}")]
         public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetPrivateChatMessages(string otherUserIdString)
         {
@@ -232,7 +234,13 @@ namespace perenne.Controllers
             var responseTasks = messages.Select(async msg =>
             {
                 var senderId = msg.CreatedById ?? Guid.Empty;
-                var sender = await userService.GetUserByIdAsync(senderId);
+                User? sender = null;
+
+                // CORREÇÃO: Apenas busca o usuário se o ID for válido para evitar exceções.
+                if (senderId != Guid.Empty)
+                {
+                    sender = await userService.GetUserByIdAsync(senderId);
+                }
 
                 return new ChatMessageFTO(
                     FirstName: sender?.FirstName ?? "Desconhecido",
