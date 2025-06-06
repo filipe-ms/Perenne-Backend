@@ -2,14 +2,13 @@
 using Microsoft.AspNetCore.SignalR;
 using perenne.Interfaces;
 using perenne.Models;
-using perenne.Services;
 
 namespace perenne.Websockets
 {
     [Authorize]
     public class ChatHub(
-        IUserService userService, 
-        IGroupService groupService, 
+        IUserService userService,
+        IGroupService groupService,
         IMessageCacheService messageCacheService,
         IChatService chatService) : Hub
     {
@@ -50,7 +49,6 @@ namespace perenne.Websockets
                 var isMember = group.Members != null && group.Members.Any(m => m.UserId == userIdGuid);
                 if (!isMember) throw new HubException("[ChatHub] You are not a member of this channel.");
 
-                // "Groups" is from SignalR, not related to our application's Groups
                 await Groups.AddToGroupAsync(Context.ConnectionId, channelIdString);
 
             }
@@ -66,7 +64,6 @@ namespace perenne.Websockets
 
         public async Task LeaveChannel(string channelId)
         {
-            // "Groups" is from SignalR, not related to our application's Groups
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, channelId);
         }
 
@@ -83,7 +80,7 @@ namespace perenne.Websockets
             if (string.IsNullOrWhiteSpace(messageContent))
                 throw new HubException("Message cannot be empty.");
 
-            if (!Guid.TryParse(channelIdString, out var groupIdGuid)) // Assuming channelIdString is the GroupId
+            if (!Guid.TryParse(channelIdString, out var groupIdGuid))
                 throw new HubException("Invalid channel identifier format. Expected a GUID for the group.");
 
             try
@@ -104,10 +101,8 @@ namespace perenne.Websockets
                     Message = messageContent,
                     ChatChannelId = group.ChatChannel.Id,
                     ChatChannel = group.ChatChannel,
-
                     CreatedAt = DateTime.UtcNow,
                     CreatedById = userIdGuid,
-
                     IsDelivered = true,
                     IsRead = false,
                     IsDeleted = false,
@@ -115,7 +110,7 @@ namespace perenne.Websockets
 
                 await messageCacheService.HandleChatMessageReceived(chatMessage);
 
-                await Clients.Group(channelIdString).SendAsync("ReceiveMessage", senderDisplayName, messageContent, chatMessage.CreatedAt, userIdGuid.ToString());
+                await Clients.Group(channelIdString).SendAsync("ReceiveMessage", channelIdString, senderDisplayName, messageContent, chatMessage.CreatedAt, userIdGuid.ToString());
             }
             catch (Exception ex)
             {
@@ -123,7 +118,6 @@ namespace perenne.Websockets
             }
         }
 
-        // Mensagens privadas
         public async Task SendPrivateMessage(string recipientUserIdString, string messageContent)
         {
             var senderUserIdentifier = Context.UserIdentifier;

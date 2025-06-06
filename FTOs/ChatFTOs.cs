@@ -6,6 +6,8 @@
         string Message,
         bool IsRead,
         bool IsDelivered,
-        Guid ChatChannelId
+        Guid ChatChannelId,
+        DateTime CreatedAt,
+        Guid CreatedById
         );
 }

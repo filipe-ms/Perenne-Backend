@@ -25,10 +25,10 @@ namespace perenne.Controllers
                 return BadRequest(new { message = "Id de Grupo inválido na URL." });
 
             var group = await groupService.GetGroupByIdAsync(groupId);
-            if (group == null)
-                return NotFound(new { message = "Grupo não encontrado." });
+            if (group == null || group.ChatChannel == null)
+                return NotFound(new { message = "Grupo ou canal de chat do grupo não encontrado." });
 
-            var chatId = group.ChatChannel!.Id;
+            var chatId = group.ChatChannel.Id;
             var messages = await messageCacheService.GetMessagesByChatChannelIdAsync(chatId);
 
             var response = new List<ChatMessageFTO>();
@@ -44,7 +44,10 @@ namespace perenne.Controllers
                     Message: msg.Message,
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
-                    ChatChannelId: msg.ChatChannelId
+                    ChatChannelId: msg.ChatChannelId,
+                    
+                    CreatedAt: msg.CreatedAt,
+                    CreatedById: createdById
                 ));
             }
 
@@ -62,10 +65,10 @@ namespace perenne.Controllers
                 return BadRequest(new { message = "Número de mensagens deve ser positivo." });
 
             var group = await groupService.GetGroupByIdAsync(groupId);
-            if (group == null)
-                return NotFound(new { message = "Grupo não encontrado." });
+            if (group == null || group.ChatChannel == null)
+                return NotFound(new { message = "Grupo ou canal de chat do grupo não encontrado." });
 
-            var chatId = group.ChatChannel!.Id;
+            var chatId = group.ChatChannel.Id;
             var messages = await chatService.GetLastXMessagesAsync(chatId, num);
 
             var response = new List<ChatMessageFTO>();
@@ -81,7 +84,10 @@ namespace perenne.Controllers
                     Message: msg.Message,
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
-                    ChatChannelId: msg.ChatChannelId
+                    ChatChannelId: msg.ChatChannelId,
+                    
+                    CreatedAt: msg.CreatedAt,
+                    CreatedById: createdById
                 ));
             }
 
@@ -138,7 +144,6 @@ namespace perenne.Controllers
             var channels = await chatService.GetUserPrivateChatChannelsAsync(userId);
             var result = channels.Select(async cc =>
             {
-                // Determina quem é o "outro" usuário na conversa
                 var otherUserId = cc.User1Id == userId ? cc.User2Id : cc.User1Id;
                 User? otherUser = null;
                 if (otherUserId.HasValue)
@@ -201,15 +206,16 @@ namespace perenne.Controllers
                     Message: msg.Message,
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
-                    ChatChannelId: msg.ChatChannelId
+                    ChatChannelId: msg.ChatChannelId,
+                    
+                    CreatedAt: msg.CreatedAt,
+                    CreatedById: createdById
                 ));
             }
 
             return Ok(response);
         }
 
-
-        // [GET] /api/chat/private/{otherUserIdString}
         [HttpGet("private/{otherUserIdString}")]
         public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetPrivateChatMessages(string otherUserIdString)
         {
@@ -218,7 +224,7 @@ namespace perenne.Controllers
             if (!Guid.TryParse(otherUserIdString, out var otherUserId)) return BadRequest(new { message = "ID do outro usuário é inválido." });
 
             var channel = await chatService.GetPrivateChatChannelAsync(currentUserId, otherUserId);
-            
+
             if (channel == null) return Ok(new List<ChatMessageFTO>());
 
             var messages = await messageCacheService.GetMessagesByChatChannelIdAsync(channel.Id);
@@ -229,6 +235,7 @@ namespace perenne.Controllers
             var response = messages.Select(msg =>
             {
                 var sender = msg.CreatedById == user1?.Id ? user1 : user2;
+                var senderId = msg.CreatedById ?? Guid.Empty;
 
                 return new ChatMessageFTO(
                     FirstName: sender?.FirstName ?? "Desconhecido",
@@ -236,7 +243,10 @@ namespace perenne.Controllers
                     Message: msg.Message,
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
-                    ChatChannelId: msg.ChatChannelId
+                    ChatChannelId: msg.ChatChannelId,
+                    
+                    CreatedAt: msg.CreatedAt,
+                    CreatedById: senderId
                 );
             });
 
@@ -246,7 +256,12 @@ namespace perenne.Controllers
         private Guid GetCurrentUserId()
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            return userService.ParseUserId(userIdString);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Guid.Empty;
+            }
+            Guid.TryParse(userIdString, out Guid userId);
+            return userId;
         }
     }
 }
