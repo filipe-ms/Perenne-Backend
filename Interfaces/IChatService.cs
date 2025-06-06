@@ -15,6 +15,6 @@ namespace perenne.Interfaces
         Task<ChatChannel> GetOrCreatePrivateChatChannelAsync(Guid user1Id, Guid user2Id);
         Task<IEnumerable<ChatChannel>> GetUserPrivateChatChannelsAsync(Guid userId);
 
-        Task<ChatChannel> GetPrivateChatChannelAsync(Guid user1Id, Guid user2Id);
+        Task<ChatChannel?> GetPrivateChatChannelAsync(Guid user1Id, Guid user2Id);
     }
 }

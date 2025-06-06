@@ -147,7 +147,9 @@ builder.Services.AddCors(options =>
         if (string.IsNullOrEmpty(frontendUrl))
         {
             Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
-        } else {
+        }
+        else
+        {
             var allowedOrigins = frontendUrl.Split(',')
                 .Concat(["http://localhost:5000", "https://localhost:5000"])
                 .ToArray();
@@ -174,7 +176,11 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
-// Message Cache
+
+// Registra a classe que contém o cache como Singleton para que seja compartilhada
+builder.Services.AddSingleton<MessageCache>();
+
+// Message Cache Service continua Scoped, mas agora usa o MessageCache singleton.
 builder.Services.AddScoped<IMessageCacheService, MessageCacheService>();
 
 // Feed
@@ -236,7 +242,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseCors("AllowAllOrigins");
-} else
+}
+else
 {
     app.UseCors("ProductionPolicy");
     app.UseExceptionHandler("/Error");
@@ -257,15 +264,17 @@ app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please
 app.UseHttpsRedirection();
 app.MapOpenApi();
 
-// Iniciando o cache de mensagens
+// Await para o app só rodar DEPOIS que o cache for inicializado.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Iniciando a inicialização do cache de mensagens...");
         var messageCacheService = services.GetRequiredService<IMessageCacheService>();
         await messageCacheService.InitMessageCacheServiceAsync();
-        Console.WriteLine("Cache de mensagens inicializado com sucesso!");
+        logger.LogInformation("Cache de mensagens inicializado com sucesso!");
     }
     catch (Exception ex)
     {

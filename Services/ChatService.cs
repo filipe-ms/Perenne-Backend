@@ -58,16 +58,19 @@ namespace perenne.Services
             return await chatRepository.GetUserPrivateChatChannelsAsync(userId);
         }
 
-        public async Task<ChatChannel> GetPrivateChatChannelAsync(Guid user1Id, Guid user2Id)
+        public async Task<ChatChannel?> GetPrivateChatChannelAsync(Guid user1Id, Guid user2Id)
         {
             if (user1Id == user2Id)
             {
+                // Lançar exceção aqui ainda faz sentido, pois é uma requisição inválida.
                 throw new ArgumentException("Não é possível obter um chat privado consigo mesmo.");
             }
             var u1 = user1Id < user2Id ? user1Id : user2Id;
             var u2 = user1Id < user2Id ? user2Id : user1Id;
             var channel = await chatRepository.GetPrivateChatChannelAsync(u1, u2);
-            return channel ?? throw new KeyNotFoundException($"Chat privado entre {u1} e {u2} não encontrado.");
+
+            // Simplesmente retorna o canal ou null se não for encontrado.
+            return channel;
         }
     }
 }
