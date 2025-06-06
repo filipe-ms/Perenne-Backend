@@ -23,6 +23,14 @@ public class UserService(IUserRepository userRepository) : IUserService
         return await userRepository.UpdateUserRoleInSystemAsync(userId, newRole);
     }
 
+    public async Task<User> UpdateUserAsync(User user)
+    {
+        if (user == null)
+            throw new ArgumentNullException(nameof(user), "[UserService] O usuário não pode ser nulo.");
+        return await userRepository.UpdateUserAsync(user);
+    }
+
+
     public Guid ParseUserId(string? userIdString)
     {
         if (string.IsNullOrWhiteSpace(userIdString))

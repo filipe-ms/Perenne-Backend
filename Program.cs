@@ -243,8 +243,6 @@ if (app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
 app.UseRouting();
 
 app.UseAuthentication();
@@ -256,7 +254,8 @@ app.MapHealthChecks("/healthz");
 app.MapGet("/Error", () => Results.Problem("An unexpected error occurred. Please try again later.", statusCode: 500))
    .ExcludeFromDescription();
 
-//app.MapOpenApi();
+app.UseHttpsRedirection();
+app.MapOpenApi();
 
 // Iniciando o cache de mensagens
 using (var scope = app.Services.CreateScope())

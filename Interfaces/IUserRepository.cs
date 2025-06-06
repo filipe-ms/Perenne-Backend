@@ -10,5 +10,7 @@ namespace perenne.Repositories
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId);
         Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole);
         Task<IEnumerable<User>> GetAllUsersAsync();
+
+        Task<User> UpdateUserAsync(User user);
     }
 }

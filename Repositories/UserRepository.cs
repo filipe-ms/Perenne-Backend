@@ -49,6 +49,18 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         return true;
     }
 
+    public async Task<User> UpdateUserAsync(User user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Id == user.Id) ?? throw new KeyNotFoundException($"Usuário com ID {user.Id} não encontrado.");
+        existingUser.FirstName = user.FirstName;
+        existingUser.LastName = user.LastName;
+        existingUser.Bio = user.Bio;
+        context.Users.Update(existingUser);
+        await context.SaveChangesAsync();
+        return existingUser;
+    }
+
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
         var users = await context.Users.ToListAsync();

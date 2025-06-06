@@ -11,5 +11,7 @@ namespace perenne.Interfaces
         Guid ParseUserId(string? str);
         Task<bool> UpdateUserRoleInSystemAsync(Guid userId, SystemRole newRole);
         Task<IEnumerable<User>> GetAllUsersAsync();
+
+        Task<User> UpdateUserAsync(User user);
     }
 }

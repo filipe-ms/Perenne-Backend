@@ -7,4 +7,10 @@ namespace perenne.DTOs
         string UserIdString,
         [Required(ErrorMessage ="Campo de cargo vazio!")]
         string NewRoleString);
+
+    public record EditUserDTO(
+        string? FirstName,
+        string? LastName,
+        string? Bio,
+        string? ProfilePictureURL);
 }
