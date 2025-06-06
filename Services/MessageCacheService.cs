@@ -42,10 +42,7 @@ namespace perenne.Services
 
         public async Task<IEnumerable<ChatMessage>> GetMessagesByChatChannelIdAsync(Guid chatId)
         {
-            if (!_messageCache.IsInitialized)
-                throw new InvalidOperationException("O cache ainda não foi inicializado. Por favor aguarde.");
-
-            if (_messageCache.Messages.TryGetValue(chatId, out var messages))
+            if (_messageCache.IsInitialized && _messageCache.Messages.TryGetValue(chatId, out var messages))
             {
                 return messages.ToList();
             }
@@ -57,6 +54,7 @@ namespace perenne.Services
         public async Task<ChatMessage> HandleChatMessageReceived(ChatMessage message)
         {
             ArgumentNullException.ThrowIfNull(message);
+
             var createdMessage = await _chatService.CreateChatMessageAsync(message);
 
             if (_messageCache.IsInitialized)
