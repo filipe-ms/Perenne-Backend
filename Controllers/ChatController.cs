@@ -5,7 +5,6 @@ using perenne.Models;
 using System.Security.Claims;
 using perenne.DTOs;
 using perenne.FTOs;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace perenne.Controllers
 {
@@ -217,7 +216,6 @@ namespace perenne.Controllers
             return Ok(response);
         }
 
-        // --- MÉTODO CORRIGIDO ---
         [HttpGet("private/{otherUserIdString}")]
         public async Task<ActionResult<IEnumerable<ChatMessageFTO>>> GetPrivateChatMessages(string otherUserIdString)
         {
@@ -231,16 +229,13 @@ namespace perenne.Controllers
 
             var messages = await messageCacheService.GetMessagesByChatChannelIdAsync(channel.Id);
 
-            var responseTasks = messages.Select(async msg =>
-            {
-                var senderId = msg.CreatedById ?? Guid.Empty;
-                User? sender = null;
+            var user1 = await userService.GetUserByIdAsync(channel.User1Id ?? Guid.Empty);
+            var user2 = await userService.GetUserByIdAsync(channel.User2Id ?? Guid.Empty);
 
-                // CORREÇÃO: Apenas busca o usuário se o ID for válido para evitar exceções.
-                if (senderId != Guid.Empty)
-                {
-                    sender = await userService.GetUserByIdAsync(senderId);
-                }
+            var response = messages.Select(msg =>
+            {
+                var sender = msg.CreatedById == user1?.Id ? user1 : user2;
+                var senderId = msg.CreatedById ?? Guid.Empty;
 
                 return new ChatMessageFTO(
                     FirstName: sender?.FirstName ?? "Desconhecido",
@@ -249,12 +244,11 @@ namespace perenne.Controllers
                     IsRead: msg.IsRead,
                     IsDelivered: msg.IsDelivered,
                     ChatChannelId: msg.ChatChannelId,
+
                     CreatedAt: msg.CreatedAt,
                     CreatedById: senderId
                 );
             });
-
-            var response = await Task.WhenAll(responseTasks);
 
             return Ok(response);
         }
