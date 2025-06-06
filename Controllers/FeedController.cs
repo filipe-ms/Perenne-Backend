@@ -6,13 +6,15 @@ using perenne.Interfaces;
 using perenne.Models;
 using System.Security.Claims;
 
-
 namespace perenne.Controllers
 {
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class FeedController(IFeedService feedService, IGroupService groupService, IUserService userService) : ControllerBase
+    public class FeedController(
+        IFeedService feedService, 
+        IGroupService groupService, 
+        IUserService userService) : ControllerBase
     {
         // [host]/api/feed/{groupIdString}/post
         [HttpPost("{groupIdString}/createpost")]
@@ -93,7 +95,7 @@ namespace perenne.Controllers
         }
 
         // [host]/api/feed/{groupIdString}/editpost
-        [HttpPatch("{groupIdString}/editpost)")]
+        [HttpPatch("{groupIdString}/editpost")]
         public async Task<ActionResult<PostFTO>> EditPost(EditPostDTO post)
         {
             if (!Guid.TryParse(post.PostIdString, out var postId))
@@ -116,7 +118,6 @@ namespace perenne.Controllers
             return Ok(response);
         }
 
-
         // [host]/api/feed/{groupIdString}/getposts/{num}
         [HttpGet("{groupIdString}/getposts/{num}")]
         public async Task<ActionResult<IEnumerable<PostFTO>>> GetLastXPosts(string groupIdString, int num)
@@ -138,21 +139,17 @@ namespace perenne.Controllers
             return Ok(answer);
         }
 
-
         // Utils
-
         private Guid? GetCurrentUserId()
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
             return userService.ParseUserId(userIdString);
         }
-
         private async Task<User> GetCurrentUser()
         {
             var userId = GetCurrentUserId() ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
             var user = await userService.GetUserByIdAsync(userId);
             return user ?? throw new Exception($"Usuário com ID {userId} não encontrado.");
         }
-
     }
 }
