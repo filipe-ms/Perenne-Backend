@@ -15,6 +15,17 @@ Informações sobre o deploy:
 - Frontend está hospedado no [Vercel](https://vercel.com/).
 - Backend e banco de dados estão hospedados no [Render](https://render.com/).
 
+Contas para testes:
+
+Admin:
+E-mail: admin@projetos3.com
+senha: testeplataforma@
+
+Usuário:
+E-mail: usuario@projetos3.com
+senha: testeplataforma@
+
+
 Obs: `FTO` é uma brincadeira interna para diferenciar os `DTOs` de saída dos de entrada. `DTO` seria _Dentro Transfer Object_ (entrada), enquanto `FTO` seria _Fora Transfer Object_ (saída).
 
 
