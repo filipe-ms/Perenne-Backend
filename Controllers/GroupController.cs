@@ -23,12 +23,23 @@ namespace perenne.Controllers
 
             if (group == null) return NotFound("Grupo não encontrado!");
 
-            var members = group.Members.Select(gm => new MemberFTO(gm)).ToList();
+            var memberTasks = group.Members.Select(async gm =>
+            {
+                var user = await userService.GetUserByIdAsync(gm.UserId);
+                return new MemberFTO(gm)
+                {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName
+                };
+            });
 
-            var groupFto = new GroupFTO(group.Name, group.Description ?? string.Empty, members);
+            var memberList = (await Task.WhenAll(memberTasks)).ToList();
+
+            var groupFto = new GroupFTO(group.Name, group.Description ?? string.Empty, memberList);
 
             return groupFto;
         }
+
 
         // [host]/api/{groupIdString}/join
         [HttpPost("{groupIdString}/join")]

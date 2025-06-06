@@ -15,8 +15,7 @@ namespace perenne.Repositories
         {
             var groups = await context.Groups.ToListAsync();
 
-            var filteredGroups = groups
-                .Where(g => !RemoveAccents(g.Name).Equals("geral", StringComparison.OrdinalIgnoreCase))
+            var groupList = groups
                 .Select(g => new GroupListFTO
                 {
                     Id = g.Id,
@@ -25,7 +24,7 @@ namespace perenne.Repositories
                     IsPrivate = g.IsPrivate,
                 });
 
-            return filteredGroups;
+            return groupList;
         }
         public async Task<Group> GetGroupByIdAsync(Guid id)
         {

@@ -29,8 +29,6 @@ namespace perenne.FTOs
         public MemberFTO(GroupMember member)
         {
             UserId = member.UserId;
-            FirstName = member.User.FirstName;
-            LastName = member.User.LastName;
             Role = member.Role;
             IsBlocked = member.IsBlocked;
             MutedUntil = member.MutedUntil;

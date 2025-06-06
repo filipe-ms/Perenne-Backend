@@ -12,7 +12,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://*:{port}");
 
 // Configuração das opções JWT
@@ -148,7 +148,10 @@ builder.Services.AddCors(options =>
         {
             Console.WriteLine("WARNING: FrontendUrl not configured for ProductionPolicy. CORS will be very restrictive or fail.");
         } else {
-            policy.WithOrigins(frontendUrl.Split(','))
+            var allowedOrigins = frontendUrl.Split(',')
+                .Concat(["http://localhost:5000", "https://localhost:5000"])
+                .ToArray();
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
