@@ -92,6 +92,30 @@ namespace perenne.Controllers
             return Ok(answer);
         }
 
+        // [host]/api/feed/{groupIdString}/editpost
+        [HttpPatch("{groupIdString}/editpost)")]
+        public async Task<ActionResult<PostFTO>> EditPost(EditPostDTO post)
+        {
+            if (!Guid.TryParse(post.PostIdString, out var postId))
+                return BadRequest(new { message = "ID de post inválido." });
+
+            var postToEdit = await feedService.GetPostByIdAsync(postId);
+            if (postToEdit == null)
+                return NotFound(new { message = "Post não encontrado." });
+
+            postToEdit.Title = !string.IsNullOrWhiteSpace(post.Title) ? post.Title : postToEdit.Title;
+            postToEdit.Content = !string.IsNullOrWhiteSpace(post.Content) ? post.Content : postToEdit.Content;
+            postToEdit.ImageUrl = !string.IsNullOrWhiteSpace(post.ImageUrl) ? post.ImageUrl : postToEdit.ImageUrl;
+
+            postToEdit.UpdatedAt = DateTime.UtcNow;
+            postToEdit.UpdatedById = GetCurrentUserId() ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
+            var edited = await feedService.UpdatePostAsync(postToEdit);
+            var response = new PostFTO(edited);
+
+            return Ok(response);
+        }
+
 
         // [host]/api/feed/{groupIdString}/getposts/{num}
         [HttpGet("{groupIdString}/getposts/{num}")]

@@ -13,5 +13,7 @@ namespace perenne.Interfaces
         // Post
 
         Task<Post> CreatePostAsync(Post post);
+        Task<Post> UpdatePostAsync(Post post);
+        Task<Post> GetPostByIdAsync(Guid postId);
     }
 }

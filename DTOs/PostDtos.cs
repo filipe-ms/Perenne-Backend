@@ -10,4 +10,12 @@ namespace perenne.DTOs
         public string? Content { get; set; } = string.Empty;
         public string? ImageUrl { get; set; } = string.Empty;
     }
+
+    public class EditPostDTO
+    {
+        public string? PostIdString { get; set; }
+        public string? Title { get; set; }
+        public string? Content { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; } = string.Empty;
+    }
 }

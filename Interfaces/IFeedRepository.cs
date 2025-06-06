@@ -8,7 +8,7 @@ namespace perenne.Interfaces
         
         // Post
         Task<Post> CreatePostAsync(Post post);
-        Task UpdatePostAsync(Post post);
+        Task<Post> UpdatePostAsync(Post post);
         Task<bool> DeletePostAsync(Guid id);
         Task<Post> GetPostByIdAsync(Guid id);
 

@@ -31,5 +31,16 @@ namespace perenne.Services
             var result = await feedRepository.DeletePostAsync(postId);
             return result;
         }
+
+        public async Task<Post> UpdatePostAsync(Post post)
+        {
+            return await feedRepository.UpdatePostAsync(post);
+        }
+
+        public async Task<Post> GetPostByIdAsync(Guid postId)
+        {
+            if (postId == Guid.Empty) throw new ArgumentException("Post ID cannot be empty.", nameof(postId));
+            return await feedRepository.GetPostByIdAsync(postId);
+        }
     }
 }

@@ -42,10 +42,11 @@ namespace perenne.Repositories
             return post;
         }
 
-        public async Task UpdatePostAsync(Post post)
+        public async Task<Post> UpdatePostAsync(Post post)
         {
             _context.Posts.Update(post);
             await _context.SaveChangesAsync();
+            return post;
         }
 
         public async Task<bool> DeletePostAsync(Guid id)
